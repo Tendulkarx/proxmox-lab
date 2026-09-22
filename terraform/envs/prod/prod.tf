@@ -17,6 +17,7 @@ resource "proxmox_virtual_environment_vm" "prdsrv1" {
   name      = "prdsrv1"
   node_name = "prx-server-1"
   vm_id     = 100
+  tags      = ["prod", "terraform", "windows"]
 
   bios          = "ovmf"
   machine       = "pc-q35-9.0"
@@ -24,6 +25,13 @@ resource "proxmox_virtual_environment_vm" "prdsrv1" {
   scsi_hardware = "virtio-scsi-single"
   on_boot       = true
   started       = true
+
+  # Starts after prdsrv2 (DNS + reverse proxy)
+  startup {
+    order      = 2
+    up_delay   = 0
+    down_delay = 120
+  }
 
   reboot_after_update = false
   stop_on_destroy     = false
@@ -91,7 +99,7 @@ resource "proxmox_virtual_environment_vm" "prdsrv1" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [cdrom, efi_disk, tpm_state, hostpci, description, tags]
+    ignore_changes  = [cdrom, efi_disk, tpm_state, hostpci, description]
   }
 }
 
@@ -103,6 +111,7 @@ resource "proxmox_virtual_environment_vm" "prdsrv2" {
   name      = "prdsrv2"
   node_name = "prx-server-1"
   vm_id     = 101
+  tags      = ["docker", "linux", "prod", "terraform"]
 
   bios          = "seabios"
   boot_order    = ["scsi0", "ide2", "net0"]
@@ -110,13 +119,28 @@ resource "proxmox_virtual_environment_vm" "prdsrv2" {
   on_boot       = true
   started       = true
 
+  # First to start on prx-server-1: everything else relies on its DNS and Caddy
+  startup {
+    order      = 1
+    up_delay   = 60
+    down_delay = 120
+  }
+
   reboot_after_update = false
   stop_on_destroy     = false
 
+  # Enabled 2026-09-22. Short timeout: until prdsrv2 is stopped and started once, the agent
+  # port doesn't exist and Terraform would otherwise wait the full timeout for it.
+  agent {
+    enabled = true
+    timeout = "2m"
+  }
+
+  # Was 2 cores, x86-64-v2-AES. Standalone host, no migration: expose the full CPU.
   cpu {
-    cores   = 2
+    cores   = 4
     sockets = 1
-    type    = "x86-64-v2-AES"
+    type    = "host"
   }
 
   memory {
@@ -129,8 +153,8 @@ resource "proxmox_virtual_environment_vm" "prdsrv2" {
     file_format  = "qcow2"
     size         = 100
     iothread     = true
-    discard      = "ignore"
-    ssd          = false
+    discard      = "on" # hand freed space back to the host
+    ssd          = true
   }
 
   network_device {
@@ -146,7 +170,7 @@ resource "proxmox_virtual_environment_vm" "prdsrv2" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [cdrom, description, tags]
+    ignore_changes  = [cdrom, description]
   }
 }
 
@@ -158,6 +182,7 @@ resource "proxmox_virtual_environment_vm" "prdsrv3" {
   name      = "prdsrv3"
   node_name = "prx-server-2"
   vm_id     = 100
+  tags      = ["docker", "linux", "prod", "terraform"]
 
   bios          = "seabios"
   boot_order    = ["scsi0", "ide2", "net0"]
@@ -173,14 +198,21 @@ resource "proxmox_virtual_environment_vm" "prdsrv3" {
     timeout = "15m"
   }
 
+  startup {
+    order      = 1
+    up_delay   = 30
+    down_delay = 120
+  }
+
   cpu {
     cores   = 4
     sockets = 1
-    type    = "x86-64-v2-AES"
+    type    = "host"
   }
 
+  # Was 8 GB on a host with 7.6 GB physical RAM (prx2 was swapping)
   memory {
-    dedicated = 8192
+    dedicated = 6144
   }
 
   disk {
@@ -190,7 +222,7 @@ resource "proxmox_virtual_environment_vm" "prdsrv3" {
     size         = 150
     iothread     = true
     discard      = "on"
-    ssd          = false
+    ssd          = true
   }
 
   network_device {
@@ -206,6 +238,6 @@ resource "proxmox_virtual_environment_vm" "prdsrv3" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [cdrom, description, tags]
+    ignore_changes  = [cdrom, description]
   }
 }

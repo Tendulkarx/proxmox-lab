@@ -46,6 +46,8 @@ Short record of choices and the reason for each. Newest at the bottom.
 
 | 33 | Prod definitions in `envs/prod/prod.tf` are hand-tidied from `-generate-config-out`, not used raw | The generated file failed validation (`cpu.units = 0`) and carried computed fields. Only real settings are kept; hand-built hardware (CD drives, EFI/TPM, iGPU passthrough) is listed in `ignore_changes` so Terraform never tries to "fix" it |
 
+| 34 | Prod improvements from the review applied as Terraform changes: tags, start order, prdsrv2 agent + `host` CPU + 4 cores + discard/SSD, prdsrv3 `host` CPU + 6 GB RAM + SSD | Recorded and reversible in git. `reboot_after_update = false` leaves hardware changes pending in Proxmox until O'Neil stops and starts each VM at a chosen time |
+
 ## Open items
 
 - None blocking phase 1.
