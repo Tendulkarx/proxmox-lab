@@ -6,6 +6,8 @@
 #   * prevent_destroy: Terraform refuses any plan that would delete or replace these VMs.
 #   * reboot_after_update = false: changes that need a restart are applied to the config and
 #     wait for YOU to stop/start the VM at a time that suits you.
+#   * Start order is NOT set here: Proxmox requires Sys.Modify on / to change it, which the
+#     Terraform token deliberately lacks. It is set by Ansible (roles/pve_host, as root).
 #   * ignore_changes covers hardware set up by hand that isn't modelled here (CD drives,
 #     EFI/TPM disks, passthrough), so Terraform never tries to "correct" it.
 
@@ -26,12 +28,6 @@ resource "proxmox_virtual_environment_vm" "prdsrv1" {
   on_boot       = true
   started       = true
 
-  # Starts after prdsrv2 (DNS + reverse proxy)
-  startup {
-    order      = 2
-    up_delay   = 0
-    down_delay = 120
-  }
 
   reboot_after_update = false
   stop_on_destroy     = false
@@ -99,7 +95,7 @@ resource "proxmox_virtual_environment_vm" "prdsrv1" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [cdrom, efi_disk, tpm_state, hostpci, description]
+    ignore_changes  = [cdrom, efi_disk, tpm_state, hostpci, description, startup]
   }
 }
 
@@ -119,12 +115,6 @@ resource "proxmox_virtual_environment_vm" "prdsrv2" {
   on_boot       = true
   started       = true
 
-  # First to start on prx-server-1: everything else relies on its DNS and Caddy
-  startup {
-    order      = 1
-    up_delay   = 60
-    down_delay = 120
-  }
 
   reboot_after_update = false
   stop_on_destroy     = false
@@ -170,7 +160,7 @@ resource "proxmox_virtual_environment_vm" "prdsrv2" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [cdrom, description]
+    ignore_changes  = [cdrom, description, startup]
   }
 }
 
@@ -198,11 +188,6 @@ resource "proxmox_virtual_environment_vm" "prdsrv3" {
     timeout = "15m"
   }
 
-  startup {
-    order      = 1
-    up_delay   = 30
-    down_delay = 120
-  }
 
   cpu {
     cores   = 4
@@ -238,6 +223,6 @@ resource "proxmox_virtual_environment_vm" "prdsrv3" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [cdrom, description]
+    ignore_changes  = [cdrom, description, startup]
   }
 }

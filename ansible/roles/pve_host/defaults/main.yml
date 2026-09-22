@@ -20,3 +20,12 @@ pve_ntfy_url: ""
 # Literal Proxmox template placeholders (not Jinja), hence !unsafe
 pve_backup_notes: !unsafe "{{guestname}}"
 pve_ntfy_body: !unsafe "{{ title }}\n\n{{ message }}"
+
+# VM start order per host (set as root; the Terraform token lacks Sys.Modify, which
+# Proxmox requires for this option). Keyed by pve_node.
+pve_startup:
+  prx-server-1:
+    101: "order=1,up=60,down=120"   # prdsrv2: DNS + reverse proxy first
+    100: "order=2,down=120"         # prdsrv1
+  prx-server-2:
+    100: "order=1,up=30,down=120"   # prdsrv3
