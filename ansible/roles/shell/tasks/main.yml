@@ -1,0 +1,85 @@
+---
+# Mirrors the Mac shell: zsh + starship + eza + zoxide + fzf + autosuggestions + syntax
+# highlighting, with O'Neil's own dotfiles copied verbatim from dotfiles_dir.
+
+- name: Shell packages from apt
+  ansible.builtin.apt:
+    name:
+      - zsh
+      - zsh-autosuggestions
+      - zsh-syntax-highlighting
+      - eza
+      - zoxide
+    state: present
+
+- name: Check installed fzf version
+  ansible.builtin.command: /usr/local/bin/fzf --version
+  register: fzf_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install fzf {{ fzf_version }}
+  ansible.builtin.unarchive:
+    src: "https://github.com/junegunn/fzf/releases/download/v{{ fzf_version }}/fzf-{{ fzf_version }}-linux_amd64.tar.gz"
+    dest: /usr/local/bin
+    remote_src: true
+    mode: "0755"
+  when: fzf_version not in (fzf_installed.stdout | default(''))
+
+- name: Check installed starship version
+  ansible.builtin.command: /usr/local/bin/starship --version
+  register: starship_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install starship {{ starship_version }}
+  ansible.builtin.unarchive:
+    src: "https://github.com/starship/starship/releases/download/v{{ starship_version }}/starship-x86_64-unknown-linux-musl.tar.gz"
+    dest: /usr/local/bin
+    remote_src: true
+    mode: "0755"
+  when: starship_version not in (starship_installed.stdout | default(''))
+
+- name: zsh is the login shell for {{ shell_user }}
+  ansible.builtin.user:
+    name: "{{ shell_user }}"
+    shell: /usr/bin/zsh
+
+- name: Config directories
+  ansible.builtin.file:
+    path: "/home/{{ shell_user }}/{{ item }}"
+    state: directory
+    owner: "{{ shell_user }}"
+    group: "{{ shell_user }}"
+    mode: "0755"
+  loop:
+    - .zsh
+    - .config
+
+- name: Copy dotfiles verbatim from the Mac
+  ansible.builtin.copy:
+    src: "{{ dotfiles_dir }}/{{ item }}"
+    dest: "/home/{{ shell_user }}/{{ item }}"
+    owner: "{{ shell_user }}"
+    group: "{{ shell_user }}"
+    mode: "0644"
+  loop:
+    - .zsh/aliases.zsh
+    - .zsh/functions.zsh
+    - .zsh/starship.zsh
+    - .config/starship.toml
+
+# The Mac .zshrc loads plugins from /opt/homebrew and only runs compinit when brew exists,
+# so the VM gets: your .zshrc verbatim + a clearly marked Linux block appended at the end.
+- name: .zshrc (Mac original + Linux additions)
+  ansible.builtin.copy:
+    dest: "/home/{{ shell_user }}/.zshrc"
+    content: |
+      {{ lookup('ansible.builtin.file', dotfiles_dir + '/.zshrc') }}
+
+      # >>> proxmox-lab Linux additions (managed by Ansible: ansible/roles/shell) >>>
+      {{ lookup('ansible.builtin.template', 'zshrc-linux.zsh.j2') }}
+      # <<< proxmox-lab Linux additions <<<
+    owner: "{{ shell_user }}"
+    group: "{{ shell_user }}"
+    mode: "0644"

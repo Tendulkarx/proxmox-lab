@@ -5,14 +5,15 @@
 #   make down NAME=test1    destroy ONE lab VM (it comes back on next `make up` unless removed from tfvars)
 #   make destroy-lab        destroy ALL lab VMs
 #   make ssh NAME=test1     SSH into a lab VM
+#   make configure          run Ansible (baseline + your shell) against ENV's VMs
 
 ENV ?= lab
 TF  := op run --env-file=.env.op -- terraform -chdir=terraform/envs/$(ENV)
 
-.PHONY: help check init plan up list down destroy-lab ssh fmt validate
+.PHONY: help check init plan up list down destroy-lab ssh fmt validate ansible-deps configure
 
 help:
-	@sed -n '2,8p' Makefile
+	@sed -n '2,9p' Makefile
 
 check:
 	@command -v terraform >/dev/null || { echo "Install terraform: brew install hashicorp/tap/terraform"; exit 1; }
@@ -54,3 +55,12 @@ ssh:
 	@ip=$$(awk -v n='"$(NAME)":' '$$1==n{f=1} f&&/ansible_host/{gsub(/"/,"",$$2); print $$2; exit}' ansible/inventory/lab.generated.yml); \
 	  test -n "$$ip" || { echo "$(NAME) not in lab inventory; run make up first"; exit 1; }; \
 	  ssh -i ~/.ssh/id_ed25519_homelab -o StrictHostKeyChecking=accept-new turbx@$$ip
+
+ansible-deps:
+	@command -v ansible-playbook >/dev/null || { echo "Install Ansible: brew install ansible"; exit 1; }
+	cd ansible && ansible-galaxy collection install -r requirements.yml
+
+configure:
+	@command -v ansible-playbook >/dev/null || { echo "Install Ansible: brew install ansible"; exit 1; }
+	@test -f ansible/inventory/$(ENV).generated.yml || { echo "No inventory for $(ENV); run make up first"; exit 1; }
+	cd ansible && ansible-playbook -i inventory/$(ENV).generated.yml playbooks/site.yml $(if $(NAME),--limit $(NAME),)

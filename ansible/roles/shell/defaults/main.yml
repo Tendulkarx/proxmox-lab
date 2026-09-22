@@ -1,0 +1,5 @@
+---
+shell_user: turbx
+# Pinned; bump deliberately. Ubuntu's apt fzf is too old for `fzf --zsh` (needs 0.48+).
+fzf_version: "0.74.4"
+starship_version: "1.26.0"

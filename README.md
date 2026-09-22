@@ -4,7 +4,7 @@ Infrastructure as code for O'Neil's two Proxmox VE hosts: create, change and des
 code, then configure them with Ansible. Modelled on Christian Lempa's boilerplates approach
 (Packer template, Terraform clone, Ansible configure), adapted to this lab.
 
-Status: phase 1 (host prep) done; phase 2 (lab Terraform) ready to run.
+Status: phases 1 and 2 done; phase 3 (Ansible baseline + shell) ready to run.
 
 ## How it works
 
@@ -77,6 +77,24 @@ make up           # type 'yes' to create it
 make ssh NAME=test1
 make down NAME=test1
 ```
+
+## Phase 3: Ansible
+
+```bash
+brew install ansible
+make ansible-deps             # installs the community.general collection
+make up                       # make sure test1 exists
+make configure                # baseline + your shell on every lab VM
+make configure NAME=test1     # or just one
+make ssh NAME=test1           # lands in zsh with starship, eza, zoxide, fzf, your aliases
+```
+
+What the roles do:
+
+- `vm_baseline`: waits for cloud-init, base packages, guest agent, `Europe/London` timezone,
+  `en_GB.UTF-8` locale, unattended security upgrades, SSH keys-only / no root login.
+- `shell`: zsh as login shell, starship, eza, zoxide, fzf, autosuggestions, syntax highlighting,
+  and your `.zshrc`, `.zsh/*.zsh` and `starship.toml` copied from the agentic-os dotfiles folder.
 
 ## Daily use
 

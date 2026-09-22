@@ -27,6 +27,11 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 19 | Lab IP is derived from the VMID (`10.69.20.<vmid - 700>`), with validation that VMIDs are 900 to 919 and unique | One number per VM to choose; impossible to give two VMs the same IP by mistake |
 | 20 | Terraform writes `ansible/inventory/lab.generated.yml` on every apply (git-ignored) | Ansible always targets exactly what exists; no hand-maintained inventory |
 
+| 21 | Ansible copies the shell config **from the agentic-os dotfiles folder on the Mac** (`dotfiles_dir`), not from a copy in this repo | One source of truth: edit the dotfiles there, re-run `make configure`, every VM matches |
+| 22 | The VM `.zshrc` is the Mac `.zshrc` verbatim plus a marked Linux block appended by Ansible | The Mac file loads plugins from `/opt/homebrew` and only runs `compinit` when Homebrew exists; the block loads the Ubuntu package paths, runs `compinit`, and removes Mac aliases that break Linux (notably `ip`, which shadows the real `ip` command) |
+| 23 | fzf and starship are installed from pinned GitHub releases; zsh plugins, eza and zoxide from apt | Ubuntu 24.04's fzf (0.44) is too old for `fzf --zsh` used in the `.zshrc`; starship isn't packaged for noble |
+| 24 | `.gitconfig` is not deployed to VMs | It carries Mac-specific settings (1Password SSH signing paths) that would break git on Linux |
+
 ## Open items
 
 - None blocking phase 1.

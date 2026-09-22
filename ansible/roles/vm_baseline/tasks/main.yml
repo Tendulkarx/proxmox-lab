@@ -1,0 +1,69 @@
+---
+- name: Wait for cloud-init to finish (fresh VMs)
+  ansible.builtin.command: cloud-init status --wait
+  changed_when: false
+  failed_when: false
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Base packages
+  ansible.builtin.apt:
+    name:
+      - qemu-guest-agent
+      - unattended-upgrades
+      - curl
+      - wget
+      - git
+      - vim
+      - htop
+      - jq
+      - tree
+      - unzip
+      - dnsutils
+      - ca-certificates
+      - locales
+    state: present
+
+- name: Guest agent running
+  ansible.builtin.service:
+    name: qemu-guest-agent
+    state: started
+    enabled: true
+
+- name: Timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Locale generated
+  community.general.locale_gen:
+    name: "{{ locale }}"
+    state: present
+
+- name: Default locale
+  ansible.builtin.copy:
+    dest: /etc/default/locale
+    content: "LANG={{ locale }}\n"
+    mode: "0644"
+
+- name: Unattended security upgrades enabled
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    mode: "0644"
+
+- name: SSH hardening (keys only, no root login)
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/10-proxmox-lab.conf
+    content: |
+      # Managed by Ansible (proxmox-lab)
+      PasswordAuthentication no
+      PermitRootLogin no
+      KbdInteractiveAuthentication no
+    mode: "0644"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Restart ssh
