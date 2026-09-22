@@ -27,12 +27,29 @@
       - locales
     state: present
 
+# The agent needs a virtio-serial port that only exists once "QEMU Guest Agent" is enabled
+# on the VM in Proxmox AND the VM has been fully stopped and started. Until then, starting
+# the service fails with "a dependency job failed", so check for the port first.
+- name: Is the guest agent port present?
+  ansible.builtin.stat:
+    path: /dev/virtio-ports/org.qemu.guest_agent.0
+  register: vm_baseline_qga_port
+
 - name: Guest agent running
-  ignore_errors: "{{ ansible_check_mode }}"  # needs packages a dry run doesn't install
   ansible.builtin.service:
     name: qemu-guest-agent
     state: started
     enabled: true
+  when: vm_baseline_qga_port.stat.exists
+  ignore_errors: "{{ ansible_check_mode }}"  # needs packages a dry run doesn't install
+
+- name: Guest agent waiting on Proxmox
+  ansible.builtin.debug:
+    msg: >-
+      qemu-guest-agent is installed but the VM has no agent port yet. Enable
+      "QEMU Guest Agent" on this VM in Proxmox, then fully stop and start it (a reboot
+      from inside the guest is not enough). The agent starts by itself after that.
+  when: not vm_baseline_qga_port.stat.exists
 
 - name: Timezone
   community.general.timezone:
