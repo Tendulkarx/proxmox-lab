@@ -21,6 +21,7 @@
   check_mode: false  # read-only probe; must run in --check too
   changed_when: false
   failed_when: pve_bookworm.stdout | length > 0
+  when: not ansible_check_mode  # in a dry run the files are only "would be" removed
   tags: [repos]
 
 # M4: half-installed packages ------------------------------------------------------------
@@ -37,13 +38,16 @@
   changed_when: true
   tags: [packages]
 
-- name: Reinstall libknet1 if still not correctly installed
+- name: Report any Proxmox packages not correctly installed (informational)
   ansible.builtin.shell: |
-    if [ "$(dpkg-query -W -f='${db:Status-Abbrev}' libknet1 2>/dev/null)" != "ii " ]; then
-      apt-get update -qq && apt-get install -y --reinstall libknet1 && echo reinstalled
-    fi
-  register: pve_knet
-  changed_when: "'reinstalled' in pve_knet.stdout"
+    set -o pipefail
+    pveversion -v | grep 'not correctly installed' | grep -v '^libknet1:' || true
+  args:
+    executable: /bin/bash
+  register: pve_bad_pkgs
+  check_mode: false
+  changed_when: false
+  failed_when: pve_bad_pkgs.stdout | length > 0
   tags: [packages]
 
 # N1: old kernels -------------------------------------------------------------------------
