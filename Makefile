@@ -9,8 +9,11 @@
 
 ENV ?= lab
 TF  := op run --env-file=.env.op -- terraform -chdir=terraform/envs/$(ENV)
+# Lab VMs are rebuilt at the same IPs with new host keys, so they get their own known_hosts
+# file (never your main ~/.ssh/known_hosts), cleared whenever lab VMs are destroyed.
+LAB_KNOWN_HOSTS := $(HOME)/.ssh/known_hosts.proxmox-lab
 
-.PHONY: help check init plan up list down destroy-lab ssh fmt validate ansible-deps configure
+.PHONY: help check init plan up list down destroy-lab ssh fmt validate ansible-deps configure forget-host
 
 help:
 	@sed -n '2,9p' Makefile
@@ -45,16 +48,18 @@ down: check
 	@test -n "$(NAME)" || { echo "Usage: make down NAME=<vm>"; exit 1; }
 	@test "$(ENV)" = "lab" || { echo "make down only works on ENV=lab"; exit 1; }
 	$(TF) destroy -target='module.vm_prx1["$(NAME)"]' -target='module.vm_prx2["$(NAME)"]'
+	@$(MAKE) --no-print-directory forget-host NAME=$(NAME)
 
 destroy-lab: check
 	@test "$(ENV)" = "lab" || { echo "destroy-lab only works on ENV=lab"; exit 1; }
 	$(TF) destroy
+	@rm -f $(LAB_KNOWN_HOSTS) && echo "cleared $(LAB_KNOWN_HOSTS)"
 
 ssh:
 	@test -n "$(NAME)" || { echo "Usage: make ssh NAME=<vm>"; exit 1; }
 	@ip=$$(awk -v n='"$(NAME)":' '$$1==n{f=1} f&&/ansible_host/{gsub(/"/,"",$$2); print $$2; exit}' ansible/inventory/lab.generated.yml); \
 	  test -n "$$ip" || { echo "$(NAME) not in lab inventory; run make up first"; exit 1; }; \
-	  ssh -i ~/.ssh/id_ed25519_homelab -o StrictHostKeyChecking=accept-new turbx@$$ip
+	  ssh -i ~/.ssh/id_ed25519_homelab -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$(LAB_KNOWN_HOSTS) turbx@$$ip
 
 ansible-deps:
 	@command -v ansible-playbook >/dev/null || { echo "Install Ansible: brew install ansible"; exit 1; }
@@ -63,4 +68,11 @@ ansible-deps:
 configure:
 	@command -v ansible-playbook >/dev/null || { echo "Install Ansible: brew install ansible"; exit 1; }
 	@test -f ansible/inventory/$(ENV).generated.yml || { echo "No inventory for $(ENV); run make up first"; exit 1; }
-	cd ansible && ansible-playbook -i inventory/$(ENV).generated.yml playbooks/site.yml $(if $(NAME),--limit $(NAME),)
+	cd ansible && ANSIBLE_SSH_ARGS="-o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=accept-new $(if $(filter lab,$(ENV)),-o UserKnownHostsFile=$(LAB_KNOWN_HOSTS),)" ansible-playbook -i inventory/$(ENV).generated.yml playbooks/site.yml $(if $(NAME),--limit $(NAME),)
+
+# Remove a lab VM's old host key (it is regenerated every time the VM is rebuilt)
+forget-host:
+	@test -n "$(NAME)" || { echo "Usage: make forget-host NAME=<vm>"; exit 1; }
+	@ip=$$(awk -v n='"$(NAME)":' '$$1==n{f=1} f&&/ansible_host/{gsub(/"/,"",$$2); print $$2; exit}' ansible/inventory/lab.generated.yml 2>/dev/null); \
+	  test -n "$$ip" && ssh-keygen -R "$$ip" -f $(LAB_KNOWN_HOSTS) >/dev/null 2>&1; \
+	  echo "forgot host key for $(NAME) $${ip:-(ip unknown)}"

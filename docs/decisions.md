@@ -32,6 +32,8 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 23 | fzf and starship are installed from pinned GitHub releases; zsh plugins, eza and zoxide from apt | Ubuntu 24.04's fzf (0.44) is too old for `fzf --zsh` used in the `.zshrc`; starship isn't packaged for noble |
 | 24 | `.gitconfig` is not deployed to VMs | It carries Mac-specific settings (1Password SSH signing paths) that would break git on Linux |
 
+| 25 | Lab VMs use a separate known_hosts file, `~/.ssh/known_hosts.proxmox-lab`, cleared by `make down` / `make destroy-lab` | Lab VMs are rebuilt at the same IPs with fresh host keys, which tripped SSH's "host identification has changed" check on first use. Your main `~/.ssh/known_hosts` stays strict for everything else, including prod |
+
 ## Open items
 
 - None blocking phase 1.
