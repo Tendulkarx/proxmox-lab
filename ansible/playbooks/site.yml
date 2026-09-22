@@ -1,5 +1,5 @@
 ---
-# Baseline + O'Neil's shell on every Linux VM in the chosen inventory.
+# Baseline + O'Neil's shell + Docker on every Linux VM in the chosen inventory.
 #   make configure ENV=lab
 - name: Baseline and shell for Linux VMs
   hosts: all
@@ -7,3 +7,4 @@
   roles:
     - vm_baseline
     - shell
+    - docker

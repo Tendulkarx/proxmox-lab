@@ -1,0 +1,83 @@
+---
+# Docker Engine from Docker's official apt repo (not Ubuntu's older docker.io package).
+# If Docker is already installed by any method, installation is skipped and only the
+# user/group, folder and network steps run, so existing hosts are never disturbed.
+
+- name: Is Docker already installed?
+  ansible.builtin.command: docker --version
+  register: docker_present
+  changed_when: false
+  failed_when: false
+
+- name: Install Docker Engine
+  when: docker_present.rc != 0
+  block:
+    - name: Keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Docker apt signing key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Docker apt repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/docker.sources
+        mode: "0644"
+        content: |
+          Types: deb
+          URIs: https://download.docker.com/linux/ubuntu
+          Suites: {{ ansible_facts['distribution_release'] }}
+          Components: stable
+          Architectures: {{ 'amd64' if ansible_facts['architecture'] == 'x86_64' else ansible_facts['architecture'] }}
+          Signed-By: /etc/apt/keyrings/docker.asc
+
+    - name: Docker packages
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        update_cache: true
+        state: present
+
+- name: Docker daemon.json (log rotation)
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: "{{ docker_daemon_json | to_nice_json }}\n"
+    mode: "0644"
+  when: docker_manage_daemon_json
+  notify: Restart docker
+
+- name: Docker running and enabled
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Docker group membership for {{ docker_user }}
+  ansible.builtin.user:
+    name: "{{ docker_user }}"
+    groups: docker
+    append: true
+
+- name: Docker base directory {{ docker_base_dir }}
+  ansible.builtin.file:
+    path: "{{ docker_base_dir }}"
+    state: directory
+    owner: "{{ docker_user }}"
+    group: "{{ docker_user }}"
+    mode: "0755"
+
+- name: Shared Docker networks
+  ansible.builtin.command: docker network create {{ item }}
+  loop: "{{ docker_networks }}"
+  register: docker_net
+  changed_when: docker_net.rc == 0
+  failed_when: docker_net.rc != 0 and "already exists" not in docker_net.stderr

@@ -1,0 +1,15 @@
+---
+docker_user: turbx
+# Rotate container logs so a chatty container can't fill the disk.
+# Set false for hosts where Docker was set up by hand (e.g. prdsrv2), so an existing
+# daemon.json is never overwritten and Docker is never restarted by Ansible.
+docker_manage_daemon_json: true
+docker_daemon_json:
+  log-driver: json-file
+  log-opts:
+    max-size: "10m"
+    max-file: "3"
+# Same layout and shared network as prdsrv2 (setup-sequence.md, Phase 3)
+docker_base_dir: /opt/docker
+docker_networks:
+  - proxy

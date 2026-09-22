@@ -11,3 +11,6 @@ secrets.auto.tfvars
 ansible/inventory/*.generated.yml
 # OS
 .DS_Store
+
+# host audit reports
+audit/
