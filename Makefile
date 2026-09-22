@@ -7,6 +7,7 @@
 #   make ssh NAME=test1     SSH into a lab VM
 #   make configure          run Ansible (baseline, shell, Docker) against ENV's VMs (ENV=lab|prod)
 #   make hosts-check        dry run of Proxmox host hardening;  make hosts  applies it
+#   make audit              re-run the read-only host audit; reports land in audit/
 #   make prod-generate      Phase 4: describe existing prod VMs as Terraform (no changes made)
 
 ENV ?= lab
@@ -18,7 +19,7 @@ LAB_KNOWN_HOSTS := $(HOME)/.ssh/known_hosts.proxmox-lab
 .PHONY: help check init plan up list down destroy-lab ssh fmt validate ansible-deps configure forget-host hosts hosts-check prod-generate
 
 help:
-	@sed -n '2,11p' Makefile
+	@sed -n '2,12p' Makefile
 
 check:
 	@command -v terraform >/dev/null || { echo "Install terraform: brew install hashicorp/tap/terraform"; exit 1; }
@@ -91,3 +92,12 @@ forget-host:
 	@ip=$$(awk -v n='"$(NAME)":' '$$1==n{f=1} f&&/ansible_host/{gsub(/"/,"",$$2); print $$2; exit}' ansible/inventory/lab.generated.yml 2>/dev/null); \
 	  test -n "$$ip" && ssh-keygen -R "$$ip" -f $(LAB_KNOWN_HOSTS) >/dev/null 2>&1; \
 	  echo "forgot host key for $(NAME) $${ip:-(ip unknown)}"
+
+.PHONY: audit
+audit:
+	@for h in 10.69.20.130 10.69.20.131; do \
+	  scp -q -i ~/.ssh/id_ed25519_homelab scripts/audit-host.sh root@$$h:/root/ && \
+	  ssh -i ~/.ssh/id_ed25519_homelab root@$$h 'bash /root/audit-host.sh >/dev/null; echo /root/pve-audit-$$(hostname).txt' \
+	  | xargs -I{} scp -q -i ~/.ssh/id_ed25519_homelab root@$$h:{} audit/ && echo "audited $$h"; \
+	done
+	@ls -l audit/
