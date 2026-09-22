@@ -56,12 +56,14 @@
   notify: Restart docker
 
 - name: Docker running and enabled
+  ignore_errors: "{{ ansible_check_mode }}"  # needs packages a dry run doesn't install
   ansible.builtin.service:
     name: docker
     state: started
     enabled: true
 
 - name: Docker group membership for {{ docker_user }}
+  ignore_errors: "{{ ansible_check_mode }}"  # needs packages a dry run doesn't install
   ansible.builtin.user:
     name: "{{ docker_user }}"
     groups: docker
@@ -76,6 +78,7 @@
     mode: "0755"
 
 - name: Shared Docker networks
+  ignore_errors: "{{ ansible_check_mode }}"  # needs packages a dry run doesn't install
   ansible.builtin.command: docker network create {{ item }}
   loop: "{{ docker_networks }}"
   register: docker_net

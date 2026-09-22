@@ -28,6 +28,7 @@
     state: present
 
 - name: Guest agent running
+  ignore_errors: "{{ ansible_check_mode }}"  # needs packages a dry run doesn't install
   ansible.builtin.service:
     name: qemu-guest-agent
     state: started
