@@ -6,6 +6,7 @@
 - name: Is Docker already installed?
   ansible.builtin.command: docker --version
   register: docker_present
+  check_mode: false  # read-only probe; run it in dry runs too
   changed_when: false
   failed_when: false
 
