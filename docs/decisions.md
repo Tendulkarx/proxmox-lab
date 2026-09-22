@@ -19,7 +19,10 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 13 | Windows (prdsrv1) joins Ansible in a later phase | WinRM or OpenSSH setup is extra work; get Linux right first |
 | 14 | New dedicated repo `~/development/proxmox-lab` (local git) | Keeps this separate from the older `~/infra-as-code` sketch and the machine-setup `~/infrastructure` repo |
 
+| 15 | Template 9000 is built **on the host** by `scripts/prep-host.sh`, with `virt-customize` baking in qemu-guest-agent | The stock cloud image has no guest agent. Baking it in means Terraform never needs custom cloud-init snippets, so it needs **no SSH access to the hosts** in phase 1: API token only. This also replaces the SSH part of decision 11 |
+| 16 | Prod VMIDs confirmed: prx1 has prdsrv1 = 100, prdsrv2 = 101; prx2 has prdsrv3 = 100. Import IDs are `prx-server-1/100`, `prx-server-1/101`, `prx-server-2/100` | From `qm list`, 2026-09-22. VMIDs 900 to 919 and 9000 are free on both hosts |
+| 17 | Lab VMIDs stay unique across **both** hosts, even though standalone hosts would allow duplicates | VMID 100 already exists on both hosts, which would have to be renumbered before the two could ever be clustered or share a Proxmox Backup Server datastore. No new clashes |
+
 ## Open items
 
-- VMIDs and hosts for prdsrv1, prdsrv2, prdsrv3 (needs `qm list` from both hosts).
-- Confirm VMIDs 900 to 919 and 9000 are free on both hosts.
+- None blocking phase 1.

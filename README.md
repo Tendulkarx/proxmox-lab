@@ -14,8 +14,8 @@ golden template  ->  clone VM, set CPU/RAM/disk/IP  ->  baseline role, Docker, a
 (Ubuntu 24.04)       writes ansible inventory           runs as turbx over SSH
 ```
 
-1. **Template**: Ubuntu 24.04 cloud image as template VMID 9000 on each host.
-   Phase 1 uses the official cloud image; Packer replaces it later.
+1. **Template**: Ubuntu 24.04 cloud image, with qemu-guest-agent baked in, as template VMID 9000
+   on each host. Built by `scripts/prep-host.sh`; Packer replaces it later.
 2. **Terraform**: every VM is one entry in a map in `envs/<env>/vms.auto.tfvars`.
    `terraform apply` makes Proxmox match the map. Removing an entry destroys that VM (lab only).
 3. **Ansible**: Terraform writes `ansible/inventory/<env>.yml`; playbooks configure the guests.
@@ -34,7 +34,9 @@ golden template  ->  clone VM, set CPU/RAM/disk/IP  ->  baseline role, Docker, a
 | Lab VMIDs | 900 to 919; VMID 9xx maps to IP .2xx (e.g. 905 = .205) |
 | Template VMID | 9000 on each host |
 | Guest user | `turbx`, key `~/.ssh/id_ed25519_homelab.pub` |
-| Prod VMs | prdsrv1 (.69, Windows), prdsrv2 (.114, Docker host), prdsrv3 (.73, Linux) |
+| Prod VMs | prdsrv1: prx1 VMID 100, .69, Windows, 16 GB RAM, 128 GB disk |
+| | prdsrv2: prx1 VMID 101, .114, Docker host, 16 GB RAM, 100 GB disk |
+| | prdsrv3: prx2 VMID 100, .73, Linux, 8 GB RAM, 150 GB disk |
 
 ## Repo layout (planned)
 
