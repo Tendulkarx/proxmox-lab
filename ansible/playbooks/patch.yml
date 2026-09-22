@@ -1,0 +1,70 @@
+---
+# Supervised OS patching, one VM at a time.
+#   make backup-vm HOST=10.69.20.130 VMID=101     (take a backup first)
+#   make patch ENV=prod NAME=prdsrv2
+#
+# 1. records which containers are running
+# 2. apt full-upgrade + autoremove
+# 3. adds Docker log rotation if the VM has none (takes effect on the reboot below,
+#    so Docker is never restarted separately)
+# 4. reboots if the kernel/libc asked for it or daemon.json was added
+# 5. waits until every container that was running before is running again
+- name: Patch Linux VMs
+  hosts: all
+  become: true
+  serial: 1
+  tasks:
+    - name: Containers running before patching
+      ansible.builtin.command: docker ps --format '{{ "{{" }}.Names{{ "}}" }}'
+      register: patch_before
+      changed_when: false
+      failed_when: false
+
+    - name: Full upgrade
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        autoremove: true
+        autoclean: true
+        lock_timeout: 300
+      register: patch_apt
+
+    - name: Docker log rotation (only if the VM has no daemon.json yet)
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        force: false
+        mode: "0644"
+        content: |
+          {
+            "log-driver": "json-file",
+            "log-opts": { "max-size": "10m", "max-file": "3" }
+          }
+      when: patch_before.rc == 0
+      register: patch_daemon_json
+
+    - name: Is a reboot required?
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: patch_reboot_flag
+
+    - name: Reboot
+      ansible.builtin.reboot:
+        reboot_timeout: 900
+        msg: "proxmox-lab patching"
+      when: patch_reboot_flag.stat.exists or patch_daemon_json.changed
+
+    - name: Wait for every previously running container to be running again
+      ansible.builtin.command: docker ps --format '{{ "{{" }}.Names{{ "}}" }}'
+      register: patch_after
+      changed_when: false
+      until: (patch_before.stdout_lines | difference(patch_after.stdout_lines)) | length == 0
+      retries: 30
+      delay: 10
+      when: patch_before.rc == 0
+
+    - name: Summary
+      ansible.builtin.debug:
+        msg:
+          - "packages changed: {{ patch_apt.changed }}"
+          - "rebooted: {{ patch_reboot_flag.stat.exists or patch_daemon_json.changed }}"
+          - "containers back: {{ patch_after.stdout_lines | default([]) | length }} of {{ patch_before.stdout_lines | length }}"

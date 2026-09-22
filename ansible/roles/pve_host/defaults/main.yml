@@ -27,5 +27,4 @@ pve_startup:
   prx-server-1:
     101: "order=1,up=60,down=120"   # prdsrv2: DNS + reverse proxy first
     100: "order=2,down=120"         # prdsrv1
-  prx-server-2:
-    100: "order=1,up=30,down=120"   # prdsrv3
+  prx-server-2: {}

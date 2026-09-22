@@ -48,6 +48,9 @@ Short record of choices and the reason for each. Newest at the bottom.
 
 | 34 | Prod improvements from the review applied as Terraform changes: tags, start order, prdsrv2 agent + `host` CPU + 4 cores + discard/SSD, prdsrv3 `host` CPU + 6 GB RAM + SSD | Recorded and reversible in git. `reboot_after_update = false` leaves hardware changes pending in Proxmox until O'Neil stops and starts each VM at a chosen time |
 
+| 35 | prdsrv3 retired: removed from Terraform prod, Ansible prod inventory and start order. Final backup taken before destroy | It was a test box duplicating prdsrv2's databases with old images, on the host with the least RAM; its SQL Server was broken |
+| 36 | OS patching via `make patch` (one VM at a time: full-upgrade, reboot only if needed, then wait until every previously running container is back). Docker log rotation is added in the same run, so the reboot applies it | Supervised and repeatable; no separate Docker restart |
+
 ## Open items
 
 - None blocking phase 1.

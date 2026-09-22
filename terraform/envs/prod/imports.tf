@@ -19,8 +19,3 @@ import {
   provider = proxmox.prx1
 }
 
-import {
-  to       = proxmox_virtual_environment_vm.prdsrv3
-  id       = "prx-server-2/100"
-  provider = proxmox.prx2
-}

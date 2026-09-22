@@ -7,6 +7,8 @@
 #   make ssh NAME=test1     SSH into a lab VM
 #   make configure          run Ansible (baseline, shell, Docker) against ENV's VMs (ENV=lab|prod)
 #   make hosts-check        dry run of Proxmox host hardening;  make hosts  applies it
+#   make backup-vm HOST=<ip> VMID=<id>   one-off backup of a VM to that host's `data` storage
+#   make patch ENV=prod NAME=prdsrv2      OS updates + reboot if needed, one VM at a time
 #   make audit              read-only audit of hosts AND all VMs; reports land in audit/
 #   make prod-generate      Phase 4: describe existing prod VMs as Terraform (no changes made)
 
@@ -19,7 +21,7 @@ LAB_KNOWN_HOSTS := $(HOME)/.ssh/known_hosts.proxmox-lab
 .PHONY: help check init plan up list down destroy-lab ssh fmt validate ansible-deps configure forget-host hosts hosts-check prod-generate
 
 help:
-	@sed -n '2,12p' Makefile
+	@sed -n '2,14p' Makefile
 
 check:
 	@command -v terraform >/dev/null || { echo "Install terraform: brew install hashicorp/tap/terraform"; exit 1; }
@@ -107,3 +109,14 @@ audit-hosts:
 
 audit-vms:
 	cd ansible && ANSIBLE_SSH_ARGS="-o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=accept-new" ansible-playbook -i inventory/prod.yml -i inventory/lab.generated.yml playbooks/audit.yml
+
+.PHONY: backup-vm patch
+backup-vm:
+	@test -n "$(HOST)" -a -n "$(VMID)" || { echo "Usage: make backup-vm HOST=10.69.20.130 VMID=101"; exit 1; }
+	ssh -i ~/.ssh/id_ed25519_homelab root@$(HOST) 'vzdump $(VMID) --mode snapshot --storage data --compress zstd --notes-template "manual {{guestname}}" && pvesm list data --content backup --vmid $(VMID)'
+
+patch:
+	@test -n "$(NAME)" || { echo "Usage: make patch ENV=prod NAME=<vm>"; exit 1; }
+	@inv=ansible/inventory/$(ENV).yml; test -f $$inv || inv=ansible/inventory/$(ENV).generated.yml; \
+	  cd ansible && ANSIBLE_SSH_ARGS="-o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=accept-new $(if $(filter lab,$(ENV)),-o UserKnownHostsFile=$(LAB_KNOWN_HOSTS),)" \
+	  ansible-playbook -i ../$$inv playbooks/patch.yml --limit $(NAME) $(ARGS)
