@@ -144,7 +144,8 @@
   loop: "{{ pve_vm_cfg.results }}"
   loop_control:
     label: "{{ item.item.key }}: {{ item.item.value }}"
-  when: ("startup: " ~ item.item.value) not in item.stdout
+  when: >-
+    ('startup: ' ~ item.item.value) not in item.stdout
   changed_when: true
   tags: [startup]
 
