@@ -32,7 +32,7 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 23 | fzf and starship are installed from pinned GitHub releases; zsh plugins, eza and zoxide from apt | Ubuntu 24.04's fzf (0.44) is too old for `fzf --zsh` used in the `.zshrc`; starship isn't packaged for noble |
 | 24 | `.gitconfig` is not deployed to VMs | It carries Mac-specific settings (1Password SSH signing paths) that would break git on Linux |
 
-| 25 | Lab VMs use a separate known_hosts file, `~/.ssh/known_hosts.proxmox-lab`, cleared by `make down` / `make destroy-lab` | Lab VMs are rebuilt at the same IPs with fresh host keys, which tripped SSH's "host identification has changed" check on first use. Your main `~/.ssh/known_hosts` stays strict for everything else, including prod |
+| 25 | Lab VMs use a separate known_hosts file, `~/.ssh/known_hosts.proxmox-lab`, cleared by `make up`, `make down` and `make destroy-lab` | Lab VMs are rebuilt at the same IPs with fresh host keys, which tripped SSH's "host identification has changed" check on first use. Your main `~/.ssh/known_hosts` stays strict for everything else, including prod |
 
 | 26 | Docker Engine from Docker's official apt repo on every Linux VM, with `/opt/docker` owned by turbx and a shared `proxy` network | Same layout as prdsrv2 (setup-sequence.md Phase 3), so compose stacks move between VMs unchanged. Install is skipped if Docker already exists; for hand-built hosts set `docker_manage_daemon_json: false` so Ansible never rewrites daemon.json or restarts Docker |
 | 27 | `scripts/audit-host.sh` is a read-only report; output goes to `audit/` (git-ignored) | Basis for the Proxmox review; nothing on the host is changed |

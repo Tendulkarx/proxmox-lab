@@ -42,6 +42,7 @@ plan: check
 
 up: check
 	$(TF) apply
+	@if [ "$(ENV)" = "lab" ]; then rm -f $(LAB_KNOWN_HOSTS); echo "cleared lab host keys ($(LAB_KNOWN_HOSTS)); they are re-learned on first connect"; fi
 
 list:
 	@$(TF) output vms
