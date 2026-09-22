@@ -1,0 +1,15 @@
+# Existing production Linux VMs (hand-built). prdsrv1 (Windows) joins later.
+# Before the first run: ssh-copy-id -i ~/.ssh/id_ed25519_homelab.pub turbx@<ip>
+all:
+  children:
+    prod:
+      hosts:
+        prdsrv2:
+          ansible_host: 10.69.20.114
+        prdsrv3:
+          ansible_host: 10.69.20.73
+      vars:
+        ansible_user: turbx
+        ansible_ssh_private_key_file: ~/.ssh/id_ed25519_homelab
+        # Docker on these was set up by hand: never rewrite daemon.json or restart Docker
+        docker_manage_daemon_json: false

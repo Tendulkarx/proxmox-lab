@@ -37,6 +37,11 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 26 | Docker Engine from Docker's official apt repo on every Linux VM, with `/opt/docker` owned by turbx and a shared `proxy` network | Same layout as prdsrv2 (setup-sequence.md Phase 3), so compose stacks move between VMs unchanged. Install is skipped if Docker already exists; for hand-built hosts set `docker_manage_daemon_json: false` so Ansible never rewrites daemon.json or restarts Docker |
 | 27 | `scripts/audit-host.sh` is a read-only report; output goes to `audit/` (git-ignored) | Basis for the Proxmox review; nothing on the host is changed |
 
+| 28 | **Lab VMs default to prx1**, on its spare `local-lvm` pool (raw disks); prx2 only for small VMs. Supersedes decision 3 | The audit showed prx2 has 7.6 GiB RAM and was already swapping; prx1 has 62 GiB. Lab on `local-lvm` keeps the NVMe `data` disk for prod |
+| 29 | Host hardening lives in `ansible/roles/pve_host` (`make hosts-check`, `make hosts`) | Everything from docs/proxmox-review.md that doesn't touch VMs: stale repos, broken package, old kernels, root SSH key-only, FQDN/search domain `home.arpa`, nightly backups, tag colours, optional ntfy alerts |
+| 30 | Interim backups: nightly vzdump to the host's own `data`, `keep-last=2`, lab VMIDs excluded | Something tonight beats nothing. Only 2 copies because they sit on the same disk as the VMs; Proxmox Backup Server on the other host is the next step |
+| 31 | Prod VMs are adopted with `import` blocks and `terraform plan -generate-config-out` | Terraform describes each VM exactly as it is, instead of hand-writing configs and risking a replace. Changes that need reboots (prdsrv2 agent, CPU, cores, discard; prdsrv3 RAM; start order; tags) are applied afterwards as reviewed diffs, with `reboot_after_update = false` |
+
 ## Open items
 
 - None blocking phase 1.

@@ -1,0 +1,22 @@
+---
+# Local domain for the hosts' FQDN and DNS search (was ob.local; rest of the lab uses home.arpa)
+pve_domain: home.arpa
+
+# Nightly backup job (vzdump) to the host's own `data` storage. Lab VMIDs are excluded.
+pve_backup_schedule: "02:30"
+pve_backup_storage: data
+# Only 2 copies: these are full backups on the SAME disk as the VMs (prx1 has ~225 GB free).
+# Raise once backups move to Proxmox Backup Server (deduplicated) on the other host.
+pve_backup_retention: "keep-last=2"
+pve_backup_exclude: "{{ range(900, 920) | list | join(',') }}"
+
+# Tag colours (Datacenter > Options > Tag Style)
+pve_tag_style: "color-map=prod:c62828:ffffff;lab:2e7d32:ffffff;terraform:5c6bc0:ffffff;docker:1e88e5:ffffff;windows:0078d4:ffffff;linux:f57c00:000000;template:757575:ffffff,shape=circle,ordering=config"
+
+# Alerts: set to an ntfy topic URL (e.g. https://ntfy.sh/<long-random-topic>) to enable.
+# Empty = skipped.
+pve_ntfy_url: ""
+
+# Literal Proxmox template placeholders (not Jinja), hence !unsafe
+pve_backup_notes: !unsafe "{{guestname}}"
+pve_ntfy_body: !unsafe "{{ title }}\n\n{{ message }}"

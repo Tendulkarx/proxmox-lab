@@ -1,0 +1,8 @@
+---
+# Hardening for the Proxmox hosts themselves (docs/proxmox-review.md).
+#   make hosts-check   dry run, shows what would change
+#   make hosts         apply
+- name: Proxmox host hardening
+  hosts: proxmox
+  roles:
+    - pve_host

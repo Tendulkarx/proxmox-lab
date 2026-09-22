@@ -1,0 +1,14 @@
+# The Proxmox hosts themselves (not VMs). Used by: make hosts / make hosts-check
+all:
+  children:
+    proxmox:
+      hosts:
+        prx1:
+          ansible_host: 10.69.20.130
+          pve_node: prx-server-1
+        prx2:
+          ansible_host: 10.69.20.131
+          pve_node: prx-server-2
+      vars:
+        ansible_user: root
+        ansible_ssh_private_key_file: ~/.ssh/id_ed25519_homelab

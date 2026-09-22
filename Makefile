@@ -5,7 +5,9 @@
 #   make down NAME=test1    destroy ONE lab VM (it comes back on next `make up` unless removed from tfvars)
 #   make destroy-lab        destroy ALL lab VMs
 #   make ssh NAME=test1     SSH into a lab VM
-#   make configure          run Ansible (baseline + your shell) against ENV's VMs
+#   make configure          run Ansible (baseline, shell, Docker) against ENV's VMs (ENV=lab|prod)
+#   make hosts-check        dry run of Proxmox host hardening;  make hosts  applies it
+#   make prod-generate      Phase 4: describe existing prod VMs as Terraform (no changes made)
 
 ENV ?= lab
 TF  := op run --env-file=.env.op -- terraform -chdir=terraform/envs/$(ENV)
@@ -13,10 +15,10 @@ TF  := op run --env-file=.env.op -- terraform -chdir=terraform/envs/$(ENV)
 # file (never your main ~/.ssh/known_hosts), cleared whenever lab VMs are destroyed.
 LAB_KNOWN_HOSTS := $(HOME)/.ssh/known_hosts.proxmox-lab
 
-.PHONY: help check init plan up list down destroy-lab ssh fmt validate ansible-deps configure forget-host
+.PHONY: help check init plan up list down destroy-lab ssh fmt validate ansible-deps configure forget-host hosts hosts-check prod-generate
 
 help:
-	@sed -n '2,9p' Makefile
+	@sed -n '2,11p' Makefile
 
 check:
 	@command -v terraform >/dev/null || { echo "Install terraform: brew install hashicorp/tap/terraform"; exit 1; }
@@ -67,8 +69,20 @@ ansible-deps:
 
 configure:
 	@command -v ansible-playbook >/dev/null || { echo "Install Ansible: brew install ansible"; exit 1; }
-	@test -f ansible/inventory/$(ENV).generated.yml || { echo "No inventory for $(ENV); run make up first"; exit 1; }
-	cd ansible && ANSIBLE_SSH_ARGS="-o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=accept-new $(if $(filter lab,$(ENV)),-o UserKnownHostsFile=$(LAB_KNOWN_HOSTS),)" ansible-playbook -i inventory/$(ENV).generated.yml playbooks/site.yml $(if $(NAME),--limit $(NAME),)
+	@inv=ansible/inventory/$(ENV).yml; test -f $$inv || inv=ansible/inventory/$(ENV).generated.yml; \
+	  test -f $$inv || { echo "No inventory for $(ENV); run make up first"; exit 1; }; \
+	  cd ansible && ANSIBLE_SSH_ARGS="-o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=accept-new $(if $(filter lab,$(ENV)),-o UserKnownHostsFile=$(LAB_KNOWN_HOSTS),)" \
+	  ansible-playbook -i ../$$inv playbooks/site.yml $(if $(NAME),--limit $(NAME),) $(ARGS)
+
+hosts-check:
+	cd ansible && ansible-playbook -i inventory/proxmox.yml playbooks/proxmox-hosts.yml --check --diff $(ARGS)
+
+hosts:
+	cd ansible && ansible-playbook -i inventory/proxmox.yml playbooks/proxmox-hosts.yml $(ARGS)
+
+prod-generate: check
+	@test ! -f terraform/envs/prod/generated.tf || { echo "terraform/envs/prod/generated.tf already exists; move it aside first"; exit 1; }
+	op run --env-file=.env.op -- terraform -chdir=terraform/envs/prod plan -generate-config-out=generated.tf
 
 # Remove a lab VM's old host key (it is regenerated every time the VM is rebuilt)
 forget-host:

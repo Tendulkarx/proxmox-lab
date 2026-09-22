@@ -1,0 +1,161 @@
+---
+# Proxmox host hardening from docs/proxmox-review.md. Safe to re-run.
+# Nothing here touches running VMs.
+
+# M3: stale Proxmox 8 (bookworm) repo files --------------------------------------------
+- name: Remove stale bookworm and duplicate repo files
+  ansible.builtin.file:
+    path: "/etc/apt/sources.list.d/{{ item }}"
+    state: absent
+  loop:
+    - pve-install-repo.list
+    - pve-install-repo.sources
+    - pve-install-repo.list.bak
+    - pve-enterprise.list
+    - pve-enterprise.list.bak
+  tags: [repos]
+
+- name: No bookworm entries remain anywhere in apt sources
+  ansible.builtin.shell: grep -rl bookworm /etc/apt/sources.list /etc/apt/sources.list.d/ || true
+  register: pve_bookworm
+  check_mode: false  # read-only probe; must run in --check too
+  changed_when: false
+  failed_when: pve_bookworm.stdout | length > 0
+  tags: [repos]
+
+# M4: half-installed packages ------------------------------------------------------------
+- name: Check for half-installed packages
+  ansible.builtin.command: dpkg --audit
+  register: pve_dpkg_audit
+  check_mode: false  # read-only probe; must run in --check too
+  changed_when: false
+  tags: [packages]
+
+- name: Finish interrupted package configuration
+  ansible.builtin.command: dpkg --configure -a
+  when: pve_dpkg_audit.stdout | length > 0
+  changed_when: true
+  tags: [packages]
+
+- name: Reinstall libknet1 if still not correctly installed
+  ansible.builtin.shell: |
+    if [ "$(dpkg-query -W -f='${db:Status-Abbrev}' libknet1 2>/dev/null)" != "ii " ]; then
+      apt-get update -qq && apt-get install -y --reinstall libknet1 && echo reinstalled
+    fi
+  register: pve_knet
+  changed_when: "'reinstalled' in pve_knet.stdout"
+  tags: [packages]
+
+# N1: old kernels -------------------------------------------------------------------------
+- name: Old kernels to remove (keeps the running kernel and the newest other one)
+  ansible.builtin.shell: |
+    set -o pipefail
+    running="proxmox-kernel-$(uname -r)-signed"
+    installed=$(dpkg-query -W -f='${Package} ${db:Status-Abbrev}\n' 'proxmox-kernel-*-pve-signed' 'pve-kernel-*-pve' 2>/dev/null \
+                | awk '$2=="ii"{print $1}' | sort -V)
+    fallback=$(echo "$installed" | grep -vx "$running" | tail -1)
+    old=$(echo "$installed" | grep -vx -e "$running" -e "$fallback" || true)
+    # series meta packages for series we no longer run
+    series="proxmox-kernel-$(uname -r | cut -d. -f1-2)"
+    metas=$(dpkg-query -W -f='${Package} ${db:Status-Abbrev}\n' 'proxmox-kernel-[0-9]*' 2>/dev/null \
+            | awk '$2=="ii"{print $1}' | grep -E '^proxmox-kernel-[0-9]+\.[0-9]+$' | grep -vx "$series" || true)
+    echo $old $metas
+  args:
+    executable: /bin/bash
+  register: pve_old_kernels
+  check_mode: false  # read-only probe; must run in --check too
+  changed_when: false
+  tags: [kernels]
+
+- name: Purge old kernels
+  ansible.builtin.command: "apt-get purge -y {{ pve_old_kernels.stdout }}"
+  when: pve_old_kernels.stdout | trim | length > 0
+  changed_when: true
+  tags: [kernels]
+
+# S1: root SSH by key only ----------------------------------------------------------------
+- name: Root SSH login by key only
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/10-proxmox-lab.conf
+    content: |
+      # Managed by Ansible (proxmox-lab). Drop-ins are read before sshd_config, so this wins.
+      PermitRootLogin prohibit-password
+    mode: "0644"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Restart ssh
+  tags: [ssh]
+
+# S3: FQDN and DNS search domain ------------------------------------------------------------
+- name: Host FQDN is {{ pve_node }}.{{ pve_domain }}
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^{{ ansible_host | regex_escape }}\s'
+    line: "{{ ansible_host }} {{ pve_node }}.{{ pve_domain }} {{ pve_node }}"
+  notify: Regenerate node certificate
+  tags: [fqdn]
+
+- name: DNS search domain
+  ansible.builtin.replace:
+    path: /etc/resolv.conf
+    regexp: '^search .*$'
+    replace: "search {{ pve_domain }}"
+  tags: [fqdn]
+
+# M1: nightly backups --------------------------------------------------------------------
+- name: Does the nightly backup job exist?
+  ansible.builtin.command: pvesh get /cluster/backup/nightly
+  register: pve_backup_job
+  check_mode: false  # read-only probe; must run in --check too
+  changed_when: false
+  failed_when: false
+  tags: [backups]
+
+- name: Nightly backup job (all VMs except lab 900-919)
+  ansible.builtin.command: >
+    pvesh {{ 'set' if pve_backup_job.rc == 0 else 'create' }} /cluster/backup{{ '/nightly' if pve_backup_job.rc == 0 else '' }}
+    {{ '' if pve_backup_job.rc == 0 else '--id nightly' }}
+    --schedule '{{ pve_backup_schedule }}'
+    --storage {{ pve_backup_storage }}
+    --all 1
+    --exclude '{{ pve_backup_exclude }}'
+    --mode snapshot
+    --compress zstd
+    --prune-backups '{{ pve_backup_retention }}'
+    --notes-template '{{ pve_backup_notes }}'
+    --enabled 1
+  changed_when: true
+  tags: [backups]
+
+# N3: tag colours ------------------------------------------------------------------------
+- name: Tag colours
+  ansible.builtin.command: pvesh set /cluster/options --tag-style '{{ pve_tag_style }}'
+  changed_when: false
+  tags: [tags]
+
+# S2: alerts via ntfy (only when pve_ntfy_url is set) ------------------------------------
+- name: Alerts to ntfy
+  when: pve_ntfy_url | length > 0
+  tags: [alerts]
+  block:
+    - name: Does the ntfy target exist?
+      ansible.builtin.command: pvesh get /cluster/notifications/endpoints/webhook/ntfy
+      register: pve_ntfy
+      check_mode: false
+      changed_when: false
+      failed_when: false
+
+    - name: ntfy webhook target
+      ansible.builtin.command: >
+        pvesh create /cluster/notifications/endpoints/webhook
+        --name ntfy --method post --url '{{ pve_ntfy_url }}'
+        --body '{{ pve_ntfy_body | b64encode }}'
+      when: pve_ntfy.rc != 0
+      changed_when: true
+
+    - name: Send warnings and errors to ntfy
+      ansible.builtin.command: >
+        pvesh create /cluster/notifications/matchers
+        --name warnings-to-ntfy --target ntfy --match-severity warning --match-severity error
+      register: pve_matcher
+      changed_when: pve_matcher.rc == 0
+      failed_when: pve_matcher.rc != 0 and 'already exists' not in pve_matcher.stderr

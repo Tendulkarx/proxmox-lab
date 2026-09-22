@@ -39,7 +39,7 @@ resource "proxmox_virtual_environment_vm" "this" {
     datastore_id = var.datastore_id
     interface    = "scsi0"
     size         = var.disk_gb
-    file_format  = "qcow2"
+    file_format  = startswith(var.datastore_id, "local-lvm") ? "raw" : "qcow2" # LVM-thin only supports raw
     discard      = "on"
     ssd          = true
     iothread     = true

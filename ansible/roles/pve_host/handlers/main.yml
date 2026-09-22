@@ -1,0 +1,15 @@
+---
+- name: Restart ssh
+  ansible.builtin.service:
+    name: ssh
+    state: restarted
+
+- name: Regenerate node certificate
+  ansible.builtin.command: pvecm updatecerts --force
+  changed_when: true
+  notify: Restart pveproxy
+
+- name: Restart pveproxy
+  ansible.builtin.service:
+    name: pveproxy
+    state: restarted

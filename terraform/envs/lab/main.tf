@@ -4,6 +4,13 @@ locals {
     prx2 = "prx-server-2"
   }
 
+  # prx1: lab VMs on the spare 338 GB local-lvm pool, keeping the NVMe `data` disk for prod.
+  # prx2: its local-lvm is only 50 GB, so use `data`.
+  lab_datastore = {
+    prx1 = "local-lvm"
+    prx2 = "data"
+  }
+
   ssh_keys = [trimspace(file(pathexpand(var.ssh_public_key_file)))]
 
   vms = {
@@ -21,6 +28,7 @@ module "vm_prx1" {
 
   name            = each.key
   node_name       = local.node_names.prx1
+  datastore_id    = local.lab_datastore.prx1
   vm_id           = each.value.vmid
   cores           = each.value.cores
   memory_mb       = each.value.memory_mb
@@ -37,6 +45,7 @@ module "vm_prx2" {
 
   name            = each.key
   node_name       = local.node_names.prx2
+  datastore_id    = local.lab_datastore.prx2
   vm_id           = each.value.vmid
   cores           = each.value.cores
   memory_mb       = each.value.memory_mb
