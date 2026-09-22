@@ -8,6 +8,11 @@ resource "proxmox_virtual_environment_vm" "this" {
   on_boot = var.on_boot
   started = true
 
+  # Proxmox's "purge" also deletes the VMID from backup jobs, including their EXCLUDE
+  # list. With purge on, destroying a lab VM silently removed it from the nightly job's
+  # exclusions, so the next VM reusing that VMID would be backed up. Keep it off.
+  purge_on_destroy = false
+
   clone {
     vm_id        = var.template_id
     full         = true

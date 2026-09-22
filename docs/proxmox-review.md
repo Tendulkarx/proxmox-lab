@@ -65,3 +65,37 @@ pvesh set /cluster/options --tag-style 'color-map=prod:c62828:ffffff;lab:2e7d32:
    the other host's disk. Deduplication makes this cheap; nightly verify jobs prove restores work.
 3. **Offsite:** sync the PBS datastore (or the Paperless and Postgres dumps) to Google Drive with
    rclone, matching the approach already agreed for Paperless-ngx.
+
+## Re-audit (2026-09-22, 22:37)
+
+| Item | Before | Now |
+|---|---|---|
+| M1 Backups | none | Nightly job 02:30, snapshot, zstd, keep-last=2, lab excluded. **First run tonight; no backup exists yet** |
+| M2 prx2 memory | 305 MiB free, swapping | prdsrv3 8 GB to 6 GB, test1 moved to prx1: ~1 GiB available. Still tight; keep prx2 for prdsrv3 only |
+| M3 Bookworm repos | both hosts | gone |
+| M4 libknet1 | "not correctly installed" | cosmetic (renamed libknet1t64 on PVE 9); only libknet1t64 installed |
+| M5 prdsrv2 guest agent | off | on and responding |
+| S1 Root SSH | password allowed | key only (drop-in overrides sshd_config). **TOTP on root@pam still to do** |
+| S2 Alerts | none | **still none** (ntfy ready in `pve_host`, needs a topic URL) |
+| S3 Hostnames | `*.ob.local` | `*.home.arpa`, node certs reissued (valid to 2028) |
+| S4 prdsrv2 discard/SSD | off | on |
+| S5 CPU type | x86-64-v2-AES on prdsrv2/3 | `host` on all |
+| S6 prdsrv2 cores | 2 | 4 |
+| S7 Start order | none | prdsrv2 1st (60 s), prdsrv1 2nd; prdsrv3 1st on prx2 |
+| N1 Old kernels | 13 and 8 | 2 each (running + fallback); ~10 GB freed on prx1 root |
+| N2 local-lvm | unused | lab VMs on prx1 use it |
+| N3 Tags | none on prod | tags + colour map on both hosts |
+| N4 prdsrv1 ISO | attached | detached |
+
+### New findings
+
+- **Backup exclusion bug (fixed in code):** prx2's job excludes 901 to 919 but not 900. Destroying
+  test1 with Proxmox's "purge" option also removed VMID 900 from the job's exclude list.
+  Lab module now sets `purge_on_destroy = false`; `make hosts ARGS="--tags backups"` restores the list.
+- **Failed root login from prdsrv2 to prx2** (`authentication failure; rhost=10.69.20.114
+  user=root@pam`, 19:28). Something on prdsrv2 (most likely the Homepage or Uptime Kuma Proxmox
+  integration) logs in as root with a wrong or old password. Give it a read-only API token
+  (role `PVEAuditor`) instead of root.
+- prdsrv1 logs `vfio-pci: Cannot read device rom at 0000:00:02.0` on start. Common with Intel
+  iGPU passthrough and harmless if the VM works (agent responds). If display output ever fails,
+  set `rombar=0` on hostpci0.
