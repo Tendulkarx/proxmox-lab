@@ -42,6 +42,8 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 30 | Interim backups: nightly vzdump to the host's own `data`, `keep-last=2`, lab VMIDs excluded | Something tonight beats nothing. Only 2 copies because they sit on the same disk as the VMs; Proxmox Backup Server on the other host is the next step |
 | 31 | Prod VMs are adopted with `import` blocks and `terraform plan -generate-config-out` | Terraform describes each VM exactly as it is, instead of hand-writing configs and risking a replace. Changes that need reboots (prdsrv2 agent, CPU, cores, discard; prdsrv3 RAM; start order; tags) are applied afterwards as reviewed diffs, with `reboot_after_update = false` |
 
+| 32 | `turbx` has passwordless sudo on every Linux VM (lab via cloud-init, prod via the baseline role) | Lets Ansible run unattended. The gate is SSH itself: key-only login with a passphrase-protected key, no password or root login. First prod run needs `-K` once to install it |
+
 ## Open items
 
 - None blocking phase 1.
