@@ -44,6 +44,8 @@ Short record of choices and the reason for each. Newest at the bottom.
 
 | 32 | `turbx` has passwordless sudo on every Linux VM (lab via cloud-init, prod via the baseline role) | Lets Ansible run unattended. The gate is SSH itself: key-only login with a passphrase-protected key, no password or root login. First prod run needs `-K` once to install it |
 
+| 33 | Prod definitions in `envs/prod/prod.tf` are hand-tidied from `-generate-config-out`, not used raw | The generated file failed validation (`cpu.units = 0`) and carried computed fields. Only real settings are kept; hand-built hardware (CD drives, EFI/TPM, iGPU passthrough) is listed in `ignore_changes` so Terraform never tries to "fix" it |
+
 ## Open items
 
 - None blocking phase 1.

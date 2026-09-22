@@ -14,3 +14,7 @@ ansible/inventory/*.generated.yml
 
 # host audit reports
 audit/
+
+# terraform import scratch output
+terraform/envs/prod/generated.tf
+terraform/envs/prod/generated.tf.orig
