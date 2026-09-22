@@ -4,7 +4,7 @@ Infrastructure as code for O'Neil's two Proxmox VE hosts: create, change and des
 code, then configure them with Ansible. Modelled on Christian Lempa's boilerplates approach
 (Packer template, Terraform clone, Ansible configure), adapted to this lab.
 
-Status: **design, awaiting review**. No code yet.
+Status: phase 1 (host prep) done; phase 2 (lab Terraform) ready to run.
 
 ## How it works
 
@@ -62,7 +62,23 @@ proxmox-lab/
 └── packer/                   # phase 6
 ```
 
-## Daily use (target)
+## First run (phase 2)
+
+Prerequisites on the Mac: `brew install hashicorp/tap/terraform 1password-cli`, the 1Password
+desktop app with **Settings, Developer, Integrate with 1Password CLI** switched on, and
+`~/.ssh/id_ed25519_homelab.pub` present.
+
+```bash
+cd ~/development/proxmox-lab
+make check        # tools, key and 1Password sign-in
+make init         # downloads the bpg/proxmox provider
+make plan         # should show 1 VM to add: test1 on prx-server-2, VMID 900, 10.69.20.200
+make up           # type 'yes' to create it
+make ssh NAME=test1
+make down NAME=test1
+```
+
+## Daily use
 
 ```bash
 make up   ENV=lab               # apply lab/vms.auto.tfvars

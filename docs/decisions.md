@@ -23,6 +23,10 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 16 | Prod VMIDs confirmed: prx1 has prdsrv1 = 100, prdsrv2 = 101; prx2 has prdsrv3 = 100. Import IDs are `prx-server-1/100`, `prx-server-1/101`, `prx-server-2/100` | From `qm list`, 2026-09-22. VMIDs 900 to 919 and 9000 are free on both hosts |
 | 17 | Lab VMIDs stay unique across **both** hosts, even though standalone hosts would allow duplicates | VMID 100 already exists on both hosts, which would have to be renumbered before the two could ever be clustered or share a Proxmox Backup Server datastore. No new clashes |
 
+| 18 | Tokens live in 1Password (vault `Development`, items `proxmox-prx1-terraform` / `proxmox-prx2-terraform`, field `credential`) and reach Terraform via `op run --env-file=.env.op`. Supersedes decision 10 | `.env.op` holds only `op://` references, so it is safe to commit; no secret is ever written to disk in the repo |
+| 19 | Lab IP is derived from the VMID (`10.69.20.<vmid - 700>`), with validation that VMIDs are 900 to 919 and unique | One number per VM to choose; impossible to give two VMs the same IP by mistake |
+| 20 | Terraform writes `ansible/inventory/lab.generated.yml` on every apply (git-ignored) | Ansible always targets exactly what exists; no hand-maintained inventory |
+
 ## Open items
 
 - None blocking phase 1.
