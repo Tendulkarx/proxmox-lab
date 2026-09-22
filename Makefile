@@ -18,7 +18,8 @@ check:
 	@command -v terraform >/dev/null || { echo "Install terraform: brew install hashicorp/tap/terraform"; exit 1; }
 	@command -v op >/dev/null        || { echo "Install 1Password CLI: brew install 1password-cli"; exit 1; }
 	@test -f ~/.ssh/id_ed25519_homelab.pub || { echo "Missing ~/.ssh/id_ed25519_homelab.pub"; exit 1; }
-	@op whoami >/dev/null 2>&1 || { echo "Sign in to 1Password CLI: op signin (or enable the desktop app integration)"; exit 1; }
+	@op read "op://Development/proxmox-prx1-terraform/credential" >/dev/null || { echo "Cannot read prx1 token from 1Password (vault Development, item proxmox-prx1-terraform, field credential)"; exit 1; }
+	@op read "op://Development/proxmox-prx2-terraform/credential" >/dev/null || { echo "Cannot read prx2 token from 1Password (vault Development, item proxmox-prx2-terraform, field credential)"; exit 1; }
 	@echo "check: OK"
 
 init: check
