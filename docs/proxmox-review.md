@@ -99,3 +99,21 @@ pvesh set /cluster/options --tag-style 'color-map=prod:c62828:ffffff;lab:2e7d32:
 - prdsrv1 logs `vfio-pci: Cannot read device rom at 0000:00:02.0` on start. Common with Intel
   iGPU passthrough and harmless if the VM works (agent responds). If display output ever fails,
   set `rombar=0` on hostpci0.
+
+## VM audit (2026-09-22, 23:00): prdsrv2, prdsrv3, test1
+
+test1: clean. Both hosts: clean apart from the items above.
+
+| # | VM | Finding | Cause | Fix |
+|---|---|---|---|---|
+| V1 | prdsrv3 | `mssql_db` crash-looping (40 restarts): `PalInstanceId: Unable to read instance id from file` then `PAL initialization failed. Error: 101` | Almost certainly the disk-full episode left SQL Server's instance-id file empty/corrupt | Back up the volume, move the instance-id file aside, start (see below) |
+| V2 | prdsrv2 | Redis (`paperless-broker`): 14,050 x `Background saving error` in 24 h; last good save 19 days ago | Redis cannot write `dump.rdb` (permissions on the data folder, or fork failing). With default `stop-writes-on-bgsave-error yes` Redis refuses writes, which can stall Paperless document processing | Read the line before the error, fix ownership or overcommit |
+| V3 | prdsrv2 | fail2ban failed at boot: `jail.local line 278: section 'sshd' already exists` | Duplicate `[sshd]` block in `/etc/fail2ban/jail.local` | Remove the duplicate, restart |
+| V4 | both | 152 / 162 pending updates (117 / 108 security) | Auto-updates were off (prdsrv2) or failed on the full disk (prdsrv3) | One supervised `apt full-upgrade` per VM, then reboot |
+| V5 | both | No Docker log rotation | No `/etc/docker/daemon.json` | Add it in a maintenance window (needs a Docker restart) |
+| V6 | both | No database dumps; `/opt/docker` on prdsrv2 is **not** a git repo (notes say it was); prdsrv3's stack lives in `/home/turbx/db-stack` | | Nightly dumps per engine; `git init` both stack folders |
+| V7 | prdsrv3 | Duplicates prdsrv2's Postgres/SQL Server/Oracle with 6-month-old images, on the 7.6 GB host; avahi running; 2 swap files | | Decide: retire prdsrv3 or give it a distinct purpose |
+| V8 | both | Database ports reachable LAN-wide (prdsrv3 UFW allows 5432/1433/1521/5500 from anywhere; prdsrv2 Postgres on 0.0.0.0) | Docker published ports bypass UFW anyway | Bind to the LAN IP only; rely on UniFi rules |
+| V9 | prdsrv2 | Most images on `:latest` | | Pin versions (already planned in the vault notes) |
+
+Noise, not problems: Arcane `context canceled` (page navigation), Metabase `reset from ERROR state` (INFO lines), prdsrv3 `postgres_db` errors (all from the disk-full episode; healthy now).
