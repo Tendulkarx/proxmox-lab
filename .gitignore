@@ -1,0 +1,13 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfplan
+secrets.auto.tfvars
+*.secret.tfvars
+# Ansible
+*.retry
+ansible/inventory/*.generated.yml
+# OS
+.DS_Store
