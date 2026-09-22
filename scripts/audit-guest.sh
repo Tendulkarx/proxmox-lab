@@ -32,10 +32,10 @@ run "dpkg --audit"
 sec "Services"
 run "systemctl --failed --no-legend"
 run "systemctl is-active qemu-guest-agent ssh docker 2>/dev/null | paste - - -"
-run "ss -tulpnH | awk '{print \$1, \$5, \$7}' | sort -u"
+run "systemctl is-active avahi-daemon 2>/dev/null | sed s/^/avahi:/; ss -tulpnH | awk '{print \$1, \$5, \$7}' | sort -u"
 run "ufw status 2>/dev/null | head -20"
-run "systemctl is-active fail2ban 2>/dev/null && fail2ban-client status 2>/dev/null | tail -2"
-run "grep -hE '^(PasswordAuthentication|PermitRootLogin)' /etc/ssh/sshd_config.d/*.conf /etc/ssh/sshd_config 2>/dev/null"
+run "systemctl is-active fail2ban; fail2ban-client status 2>/dev/null | tail -2; systemctl status fail2ban --no-pager 2>/dev/null | tail -4"
+run "sshd -T 2>/dev/null | grep -E '^(passwordauthentication|permitrootlogin|pubkeyauthentication) '"
 run "last -n 5 -w 2>/dev/null | head -6"
 
 sec "Docker"
@@ -51,8 +51,20 @@ if command -v docker >/dev/null; then
   run "cat /etc/docker/daemon.json 2>/dev/null || echo 'no daemon.json (container logs never rotate)'"
   run "find /var/lib/docker/containers -name '*-json.log' -size +100M -printf '%s %p\n' 2>/dev/null | sort -rn | head -5 | awk '{printf \"%.0f MB %s\n\", \$1/1048576, \$2}'"
   run "ls /opt/docker 2>/dev/null; for d in /opt/docker/*/; do [ -f \"\$d/docker-compose.yml\" ] || [ -f \"\$d/compose.yaml\" ] || [ -f \"\$d/compose.yml\" ] && echo \"compose: \$d\"; done"
-  run "for d in /opt/docker/*/; do [ -d \"\$d/.git\" ] && echo \"git: \$d\"; done; git -C /opt/docker status --short 2>/dev/null | head -20"
-  run "docker logs --since 24h 2>&1 \$(docker ps -q | head -0) >/dev/null; for c in \$(docker ps --format '{{.Names}}'); do n=\$(docker logs --since 24h \$c 2>&1 | grep -ciE 'error|fatal|panic'); [ \"\$n\" -gt 0 ] && echo \"\$c: \$n error lines in 24h\"; done"
+  run "git -C /opt/docker rev-parse --is-inside-work-tree 2>&1 | head -1; git -C /opt/docker log --oneline -3 2>/dev/null; git -C /opt/docker status --short 2>/dev/null | head -15"
+  run "for c in \$(docker ps --format '{{.Names}}'); do n=\$(docker logs --since 24h \$c 2>&1 | grep -ciE 'error|fatal|panic'); [ \"\$n\" -gt 0 ] && echo \"\$c: \$n error lines in 24h\"; done"
+  sec "Docker drill-down: recent log lines from unhealthy, restarting or noisy containers"
+  for c in $(docker ps -a --format '{{.Names}}'); do
+    st=$(docker inspect --format '{{.State.Status}} {{.RestartCount}} {{if .State.Health}}{{.State.Health.Status}}{{end}}' "$c")
+    n=$(docker logs --since 24h "$c" 2>&1 | grep -ciE 'error|fatal|panic')
+    if [[ "$st" == restarting* || "$st" == exited* || "$st" == *unhealthy* || "$n" -gt 50 ]]; then
+      printf '\n--- %s (%s, %s error lines/24h): most common error lines\n' "$c" "$st" "$n"
+      docker logs --since 24h "$c" 2>&1 | grep -iE 'error|fatal|panic' | sed -E 's/[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9:.,]+Z?//g; s/[0-9]+/N/g' | sort | uniq -c | sort -rn | head -5 | cut -c1-220
+      printf -- '--- %s: last 8 lines\n' "$c"
+      docker logs --tail 8 "$c" 2>&1 | cut -c1-220
+    fi
+  done
+  run "docker inspect --format '{{.Name}} {{index .Config.Labels \"com.docker.compose.project.working_dir\"}}' \$(docker ps -aq) | sort -k2 | uniq"
 else
   echo "docker not installed"
 fi
