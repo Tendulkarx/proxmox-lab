@@ -7,7 +7,7 @@
 #   make ssh NAME=test1     SSH into a lab VM
 #   make configure          run Ansible (baseline, shell, Docker) against ENV's VMs (ENV=lab|prod)
 #   make hosts-check        dry run of Proxmox host hardening;  make hosts  applies it
-#   make audit              re-run the read-only host audit; reports land in audit/
+#   make audit              read-only audit of hosts AND all VMs; reports land in audit/
 #   make prod-generate      Phase 4: describe existing prod VMs as Terraform (no changes made)
 
 ENV ?= lab
@@ -93,11 +93,17 @@ forget-host:
 	  test -n "$$ip" && ssh-keygen -R "$$ip" -f $(LAB_KNOWN_HOSTS) >/dev/null 2>&1; \
 	  echo "forgot host key for $(NAME) $${ip:-(ip unknown)}"
 
-.PHONY: audit
-audit:
+.PHONY: audit audit-hosts audit-vms
+audit: audit-hosts audit-vms
+	@ls -l audit/
+
+audit-hosts:
 	@for h in 10.69.20.130 10.69.20.131; do \
 	  scp -q -i ~/.ssh/id_ed25519_homelab scripts/audit-host.sh root@$$h:/root/ && \
 	  ssh -i ~/.ssh/id_ed25519_homelab root@$$h 'bash /root/audit-host.sh >/dev/null; echo /root/pve-audit-$$(hostname).txt' \
 	  | xargs -I{} scp -q -i ~/.ssh/id_ed25519_homelab root@$$h:{} audit/ && echo "audited $$h"; \
 	done
 	@ls -l audit/
+
+audit-vms:
+	cd ansible && ANSIBLE_SSH_ARGS="-o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=accept-new" ansible-playbook -i inventory/prod.yml -i inventory/lab.generated.yml playbooks/audit.yml

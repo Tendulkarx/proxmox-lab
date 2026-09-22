@@ -1,0 +1,20 @@
+---
+# Read-only audit of Linux VMs. Fetches reports to audit/vm-<name>.txt
+#   make audit-vms
+- name: Audit Linux VMs (read-only)
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Run audit script
+      ansible.builtin.script: ../../scripts/audit-guest.sh
+      register: audit_out
+      changed_when: false
+
+    - name: Save report on the Mac
+      ansible.builtin.copy:
+        content: "{{ audit_out.stdout }}"
+        dest: "{{ playbook_dir }}/../../audit/vm-{{ inventory_hostname }}.txt"
+        mode: "0644"
+      delegate_to: localhost
+      become: false
