@@ -12,11 +12,11 @@ cannot be recovered today and the order to close it.**
 | Proxmox API tokens, root and turbx passwords | 1Password | Yes |
 | SSH key `id_ed25519_homelab` | Mac only | No, but replaceable (see scenario 5) |
 | Terraform state | Mac only, git-ignored | No, but rebuildable by re-import |
-| Dotfiles | `agentic-os/.../dotfiles` | Only if agentic-os is pushed somewhere |
+| Dotfiles | `agentic-os/.../dotfiles` | Yes, if pushed: agentic-os has a GitHub remote (`Tendulkarx/agentic-os`) |
 | App stacks (`/opt/docker/*` on prdsrv2) | prdsrv2 only, not in git | **No** (gap G2) |
 | VM backups (nightly 02:30, keep 2) | `data` disk of the **same** host | **No** if that disk dies (gap G3) |
 | Network (UniFi), DNS (Cloudflare) | their cloud consoles | Yes |
-| Build notes | `agentic-os/07-home-tech` | Only if agentic-os is pushed somewhere |
+| Build notes | `agentic-os/07-home-tech` | Yes, if pushed (same repo) |
 
 Break-glass access when SSH keys are gone: each host's web UI or physical console as
 `root@pam` (password in 1Password), then the VM console in the Proxmox UI as `turbx`
@@ -172,7 +172,7 @@ Done when every host and VM report is clean, `make plan` and `make plan ENV=prod
 | G2 | prdsrv2's app stacks are hand-managed and not in git | Rebuilding prdsrv2 without a backup means recreating every stack by hand | `stacks/` folder plus an Ansible `stacks` role; secrets via 1Password; pin image versions | a weekend |
 | G4 | No database dumps | Can only restore a whole VM, not one database; crash-consistent at best | Nightly `pg_dump`, SQL Server `BACKUP DATABASE`, Oracle `expdp` into a backup folder picked up by the VM backup | an evening |
 | G5 | Some host config is manual (data storage, fstab, iGPU kernel flags, network) | Rebuild relies on this document being right | Move storage and kernel cmdline into the `pve_host` role | an evening |
-| G6 | `agentic-os` (dotfiles, notes) only on the Mac? | Lose the shell config source and build notes | Confirm it is pushed to a remote | 5 min |
+| G6 | `agentic-os` has a GitHub remote, but its last commit was 8 days ago | Recent dotfile and note changes exist only on the Mac | Commit and push it regularly | 5 min |
 | G7 | prdsrv1 (Windows) exists only as a VM and its backup | No rebuild path | Accept (backup only), or document its setup | optional |
 | G8 | Restores have never been tested | You find out at the worst moment | Quarterly drill: restore prdsrv2's backup to VMID 919 with the NIC disconnected, boot it, check the apps' data, delete it | 30 min each quarter |
 
