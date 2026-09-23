@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make help)",
+      "Bash(make check)",
+      "Bash(make list)",
+      "Bash(make plan:*)",
+      "Bash(make audit:*)",
+      "Bash(make audit-hosts)",
+      "Bash(make audit-vms)",
+      "Bash(make validate:*)",
+      "Bash(make fmt)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(terraform fmt:*)",
+      "Bash(terraform validate:*)",
+      "Bash(ansible-playbook --syntax-check:*)",
+      "Bash(ansible-inventory:*)"
+    ],
+    "deny": [
+      "Bash(terraform destroy:*)",
+      "Bash(op read:*)",
+      "Bash(op item get:*)",
+      "Read(./**/secrets.auto.tfvars)",
+      "Read(./**/*.tfstate)",
+      "Read(./**/*.tfstate.backup)"
+    ]
+  }
+}

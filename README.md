@@ -4,7 +4,7 @@ Infrastructure as code for O'Neil's two Proxmox VE hosts: create, change and des
 code, then configure them with Ansible. Modelled on Christian Lempa's boilerplates approach
 (Packer template, Terraform clone, Ansible configure), adapted to this lab.
 
-Status: phases 1 and 2 done; phase 3 (Ansible baseline + shell) ready to run.
+Status: phases 1 to 4 done (lab, Ansible, prod adopted). See `docs/runbook.md` to work with it.
 
 ## How it works
 
