@@ -15,6 +15,8 @@ source of truth for how things run.
 - Secrets: 1Password vault `Development`, read at run time by `op run` (Touch ID prompt).
   SSH key `~/.ssh/id_ed25519_homelab`; VM user `turbx` (passwordless sudo); hosts as `root`.
 - Why things are the way they are: `docs/decisions.md`. Open work: `docs/proxmox-review.md`.
+- Anything touching recovery, backups or rebuilding: follow `docs/disaster-recovery.md`.
+- Adding a VM, host, app or capability: follow the recipe in `docs/expanding.md`.
 
 ## How to work here
 

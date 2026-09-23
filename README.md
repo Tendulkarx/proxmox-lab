@@ -6,6 +6,17 @@ code, then configure them with Ansible. Modelled on Christian Lempa's boilerplat
 
 Status: phases 1 to 4 done (lab, Ansible, prod adopted). See `docs/runbook.md` to work with it.
 
+## Documentation
+
+| Read | For |
+|---|---|
+| `docs/how-it-works.md` | the whole system, layer by layer, and what each command does |
+| `docs/runbook.md` | setup on the Mac, everyday commands, using Claude Code |
+| `docs/expanding.md` | recipes for adding VMs, hosts, apps and new capabilities |
+| `docs/disaster-recovery.md` | recovery scenarios, full rebuild from bare metal, known gaps |
+| `docs/decisions.md` | why each choice was made |
+| `docs/proxmox-review.md` | audit findings and their status |
+
 ## How it works
 
 ```
