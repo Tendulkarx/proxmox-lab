@@ -2,9 +2,9 @@
 #   make up                 create/update lab VMs to match terraform/envs/lab/vms.auto.tfvars
 #   make plan               preview changes
 #   make list               show managed VMs
-#   make down NAME=test1    destroy ONE lab VM (it comes back on next `make up` unless removed from tfvars)
+#   make down NAME=tstsrv1    destroy ONE lab VM (it comes back on next `make up` unless removed from tfvars)
 #   make destroy-lab        destroy ALL lab VMs
-#   make ssh NAME=test1     SSH into a lab VM
+#   make ssh NAME=tstsrv1     SSH into a lab VM
 #   make configure          run Ansible (baseline, shell, Docker) against ENV's VMs (ENV=lab|prod)
 #   make hosts-check        dry run of Proxmox host hardening;  make hosts  applies it
 #   make backup-vm HOST=<ip> VMID=<id>   one-off backup of a VM to that host's `data` storage

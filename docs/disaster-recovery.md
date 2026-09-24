@@ -27,7 +27,7 @@ Break-glass access when SSH keys are gone: each host's web UI or physical consol
 ### 1. A lab VM is broken (minutes)
 
 ```bash
-make down NAME=test1 && make up && make configure NAME=test1
+make down NAME=tstsrv1 && make up && make configure NAME=tstsrv1
 ```
 
 ### 2. A prod VM is broken but the host is fine (15 to 60 minutes)

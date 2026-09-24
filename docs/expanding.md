@@ -8,13 +8,15 @@ simply ask for any of these; the recipe is what it will follow.
 
 ### A lab VM
 
-Add one line to `terraform/envs/lab/vms.auto.tfvars`, then `make up` and `make configure`:
+Add one line to `terraform/envs/lab/vms.auto.tfvars`, then `make up` and `make configure`.
+Lab VMs are named `tstsrv<N>` using the lowest free number, with VMID 899 + N (tstsrv1 is
+900 at .200, tstsrv3 is 902 at .202); `make plan` rejects any other name:
 
 ```hcl
-web1 = { vmid = 902, cores = 4, memory_mb = 4096, disk_gb = 40, tags = ["docker"] }
+tstsrv3 = { vmid = 902, cores = 4, memory_mb = 4096, disk_gb = 40, tags = ["docker"] }
 ```
 
-Or in Claude Code: `/new-vm web1 4 4096 40`. Remove it by deleting the line and `make up`.
+Or in Claude Code: `/new-vm 4 4096 40`. Remove it by deleting the line and `make up`.
 
 ### Change a prod VM's hardware
 

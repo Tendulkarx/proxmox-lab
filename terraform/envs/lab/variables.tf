@@ -16,7 +16,7 @@ variable "ssh_public_key_file" {
 }
 
 variable "lab_vms" {
-  description = "Test VMs. Key = VM name. VMID 900-919 maps to IP 10.69.20.200-219."
+  description = "Test VMs. Key = VM name tstsrv<N>, VMID = 899 + N, IP = 10.69.20.(199 + N)."
   type = map(object({
     node      = optional(string, "prx1") # "prx1" (default, 62 GB RAM) or "prx2" (7.6 GB RAM)
     vmid      = number
@@ -40,5 +40,10 @@ variable "lab_vms" {
   validation {
     condition     = length(distinct([for v in values(var.lab_vms) : v.vmid])) == length(var.lab_vms)
     error_message = "Each lab VM needs a unique VMID (unique across BOTH hosts)."
+  }
+
+  validation {
+    condition     = alltrue([for name, v in var.lab_vms : name == "tstsrv${v.vmid - 899}"])
+    error_message = "Lab VMs are named tstsrv<N> with VMID 899 + N: tstsrv1 = 900, tstsrv2 = 901, and so on. Use the lowest free number."
   }
 }

@@ -25,6 +25,10 @@
       - dnsutils
       - ca-certificates
       - locales
+      # The cloud image ships linux-image-virtual, which leaves out the bochs display
+      # driver: the console then stays in 80x25 VGA text mode. The generic kernel adds it
+      # (1280x800 framebuffer, same as the ISO-installed prod VMs). Takes effect on reboot.
+      - linux-image-generic
     state: present
 
 # The agent needs a virtio-serial port that only exists once "QEMU Guest Agent" is enabled

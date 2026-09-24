@@ -83,10 +83,10 @@ desktop app with **Settings, Developer, Integrate with 1Password CLI** switched 
 cd ~/development/proxmox-lab
 make check        # tools, key and 1Password sign-in
 make init         # downloads the bpg/proxmox provider
-make plan         # should show 1 VM to add: test1 on prx-server-2, VMID 900, 10.69.20.200
+make plan         # should show 1 VM to add: tstsrv1 on prx-server-1, VMID 900, 10.69.20.200
 make up           # type 'yes' to create it
-make ssh NAME=test1
-make down NAME=test1
+make ssh NAME=tstsrv1
+make down NAME=tstsrv1
 ```
 
 ## Phase 3: Ansible
@@ -94,10 +94,10 @@ make down NAME=test1
 ```bash
 brew install ansible
 make ansible-deps             # installs the community.general collection
-make up                       # make sure test1 exists
+make up                       # make sure tstsrv1 exists
 make configure                # baseline + your shell on every lab VM
-make configure NAME=test1     # or just one
-make ssh NAME=test1           # lands in zsh with starship, eza, zoxide, fzf, your aliases
+make configure NAME=tstsrv1     # or just one
+make ssh NAME=tstsrv1           # lands in zsh with starship, eza, zoxide, fzf, your aliases
 ```
 
 What the roles do:
@@ -111,7 +111,7 @@ What the roles do:
 
 ```bash
 make up   ENV=lab               # apply lab/vms.auto.tfvars
-make down ENV=lab NAME=test1    # destroy one lab VM
+make down ENV=lab NAME=tstsrv1    # destroy one lab VM
 make list                       # show VMs Terraform manages, per env
 make configure ENV=lab          # run Ansible baseline against the env
 ```
