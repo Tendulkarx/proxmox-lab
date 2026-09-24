@@ -122,5 +122,5 @@ Noise, not problems: Arcane `context canceled` (page navigation), Metabase `rese
 
 | Item | Detail | Action |
 |---|---|---|
-| prdsrv2 serial port pending | Added in Proxmox, applies at the next full stop and start (`qm pending 101` shows `serial0`) | Next time prdsrv2 needs a restart (e.g. after `make patch`), do a full stop and start: `ssh prx1 'qm shutdown 101 && qm start 101'`. Outage 1 to 2 minutes: DNS, Caddy, all apps |
+| prdsrv2 serial port | Done 2026-09-24: prdsrv2 restarted, `serial0` live, serial-getty active, 14 containers up, Pi-hole answering | None: Console > xterm.js now works on prdsrv2 |
 | prdsrv2 locale | `/etc/default/locale` is `en_US.UTF-8` (a link to `/etc/locale.conf`); `vm_baseline` wants `en_GB.UTF-8`. Left alone on 2026-09-24 | Decide: accept `en_GB` (services pick it up on restart; affects date and number formats) or set `locale: en_US.UTF-8` for prdsrv2 in the inventory |

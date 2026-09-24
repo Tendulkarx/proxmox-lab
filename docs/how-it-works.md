@@ -84,7 +84,7 @@ then `make configure`.
 | Secret | Where | How it is used |
 |---|---|---|
 | Proxmox API tokens | 1Password `Development`: `proxmox-prx1-terraform`, `proxmox-prx2-terraform` | `op run --env-file=.env.op` injects them for each Terraform run (Touch ID) |
-| SSH key | `~/.ssh/id_ed25519_homelab` (passphrase in macOS keychain) | Ansible, `make ssh`, root on the hosts |
+| SSH key | `~/.ssh/id_ed25519_homelab` (no passphrase); backed up in 1Password as SSH Key item `id_ed25519_homelab` | Ansible, `make ssh`, root on the hosts |
 | turbx sudo password | 1Password (yours) | only needed for a brand-new hand-built VM (`ARGS="-K"`) |
 | App passwords | per-stack `.env` files on prdsrv2 | not touched by this repo |
 

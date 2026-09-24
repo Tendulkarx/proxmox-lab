@@ -10,7 +10,7 @@ cannot be recovered today and the order to close it.**
 |---|---|---|
 | This repo (all code and docs) | Mac only, local git | **No** (gap G1) |
 | Proxmox API tokens, root and turbx passwords | 1Password (`proxmox-vm-console` is turbx's console password on every VM) | Yes |
-| SSH key `id_ed25519_homelab` | Mac only; **copy it into 1Password** as an SSH Key item | Only once copied; otherwise replaceable (see scenario 5) |
+| SSH key `id_ed25519_homelab` | Mac, and 1Password (SSH Key item `id_ed25519_homelab`, vault Development, since 2026-09-24) | Yes |
 | Terraform state | Mac only, git-ignored | No, but rebuildable by re-import |
 | Dotfiles | `~/development/dotfiles` | Yes, if pushed: github.com/Tendulkarx/dotfiles (private) |
 | App stacks (`/opt/docker/*` on prdsrv2) | prdsrv2 only, not in git | **No** (gap G2) |
@@ -78,7 +78,9 @@ The VM disks on the NVMe `data` disk survive; the VM definitions in `/etc/pve` d
 
 1. Tools: `brew install hashicorp/tap/terraform 1password-cli ansible`, sign in to 1Password.
 2. Repo: clone it from the private remote (**needs gap G1 closed**).
-3. New SSH key: `ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_homelab`. Log in to each host's web
+3. SSH key: in 1Password open `id_ed25519_homelab`, export the private key to
+   `~/.ssh/id_ed25519_homelab` (`chmod 600`) and save its public key as `.pub` next to it. Only
+   if that item is gone too: `ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_homelab`, then log in to each host's web
    UI shell as root and append the new public key to `/root/.ssh/authorized_keys`; do the same
    for turbx on each VM through the Proxmox VM console.
 4. Terraform state:
