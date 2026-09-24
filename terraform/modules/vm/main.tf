@@ -1,3 +1,4 @@
+# Lab VM. ../prod-vm is a copy of this resource with prevent_destroy; keep the two in step.
 resource "proxmox_virtual_environment_vm" "this" {
   name        = var.name
   node_name   = var.node_name

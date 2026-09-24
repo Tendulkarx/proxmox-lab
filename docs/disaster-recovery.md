@@ -9,8 +9,8 @@ cannot be recovered today and the order to close it.**
 | Item | Where it lives today | Survives losing the Mac? |
 |---|---|---|
 | This repo (all code and docs) | Mac only, local git | **No** (gap G1) |
-| Proxmox API tokens, root and turbx passwords | 1Password | Yes |
-| SSH key `id_ed25519_homelab` | Mac only | No, but replaceable (see scenario 5) |
+| Proxmox API tokens, root and turbx passwords | 1Password (`proxmox-vm-console` is turbx's console password on every VM) | Yes |
+| SSH key `id_ed25519_homelab` | Mac only; **copy it into 1Password** as an SSH Key item | Only once copied; otherwise replaceable (see scenario 5) |
 | Terraform state | Mac only, git-ignored | No, but rebuildable by re-import |
 | Dotfiles | `agentic-os/.../dotfiles` | Yes, if pushed: agentic-os has a GitHub remote (`Tendulkarx/agentic-os`) |
 | App stacks (`/opt/docker/*` on prdsrv2) | prdsrv2 only, not in git | **No** (gap G2) |
@@ -19,8 +19,9 @@ cannot be recovered today and the order to close it.**
 | Build notes | `agentic-os/07-home-tech` | Yes, if pushed (same repo) |
 
 Break-glass access when SSH keys are gone: each host's web UI or physical console as
-`root@pam` (password in 1Password), then the VM console in the Proxmox UI as `turbx`
-(password login works on the console; only SSH is key-only).
+`root@pam` (password in 1Password), then the VM console in the Proxmox UI as `turbx` with the
+`proxmox-vm-console` password from 1Password (set on every VM by `vm_baseline`; the console
+accepts it, SSH never does).
 
 ## Scenarios
 

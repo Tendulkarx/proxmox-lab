@@ -37,14 +37,22 @@ Edit `ansible/roles/pve_host` (defaults for values, tasks for new behaviour), th
 
 ## New permanent (prod) VM
 
-Built from the template, so it is fully reproducible from code:
+Built from the template, so it is fully reproducible from code. The `prod-vm` module adds
+`prevent_destroy` and `reboot_after_update = false`.
 
-1. Add a resource to `terraform/envs/prod/prod.tf` using the same module as the lab, but with
-   `prevent_destroy` and `reboot_after_update = false`. Pick a VMID and IP outside the lab
-   ranges and record both in `docs/decisions.md`.
-2. Add it to `ansible/inventory/prod.yml`.
-3. `make plan ENV=prod`, `make up ENV=prod`, `make configure ENV=prod NAME=<vm>`.
-4. Add a UniFi DNS record if it needs a name.
+1. Pick the name, VMID and IP (the rules are at the top of `terraform/envs/prod/vms.auto.tfvars`):
+   - name `prdsrv<N>`, lowest free N; VMID 99 + N (prdsrv3 = 102)
+   - IP: the highest IP any prod VM uses, plus one (today .114, so prdsrv3 = .115). Check from
+     prx1 that it is free: `ping -c1 <ip>; ip neigh show <ip>` shows INCOMPLETE or FAILED.
+   `make plan ENV=prod` rejects a wrong name, a clashing IP or the lab range.
+2. Add one line to `terraform/envs/prod/vms.auto.tfvars`:
+   `prdsrv3 = { vmid = 102, ip = "10.69.20.115", cores = 4, memory_mb = 8192, disk_gb = 60 }`
+3. `make plan ENV=prod` (expect 1 to add), then `make up ENV=prod`.
+4. Add it to `ansible/inventory/prod.yml`, then `make configure ENV=prod NAME=<vm>`.
+5. Start order: add its VMID to `pve_startup` in `ansible/roles/pve_host/defaults/main.yml`,
+   then `make hosts-check` and `make hosts`. The nightly backup picks it up automatically
+   (only the lab VMIDs are excluded).
+6. Add a UniFi DNS record if it needs a name.
 
 ## Deploying applications from the repo (the next big step)
 

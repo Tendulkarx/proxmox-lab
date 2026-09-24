@@ -1,13 +1,15 @@
-# Existing production Linux VMs (hand-built). prdsrv1 (Windows) joins later.
-# Before the first run: ssh-copy-id -i ~/.ssh/id_ed25519_homelab.pub turbx@<ip>
+# Production Linux VMs. prdsrv1 (Windows) joins later.
+# Hand-built VMs need the key first: ssh-copy-id -i ~/.ssh/id_ed25519_homelab.pub turbx@<ip>
+# Template-built VMs (terraform/envs/prod/vms.auto.tfvars) have it from cloud-init: add them
+# here with their IP after `make up ENV=prod`.
 all:
   children:
     prod:
       hosts:
         prdsrv2:
           ansible_host: 10.69.20.114
+          # Docker was set up by hand: never rewrite daemon.json or restart Docker
+          docker_manage_daemon_json: false
       vars:
         ansible_user: turbx
         ansible_ssh_private_key_file: ~/.ssh/id_ed25519_homelab
-        # Docker on these was set up by hand: never rewrite daemon.json or restart Docker
-        docker_manage_daemon_json: false

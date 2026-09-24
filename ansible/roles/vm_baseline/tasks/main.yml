@@ -100,3 +100,13 @@
     group: root
     mode: "0440"
     validate: /usr/sbin/visudo -cf %s
+
+# Break-glass login for the Proxmox web console. SSH ignores it (PasswordAuthentication no).
+# The salt is derived from the hostname so the hash is stable and re-runs report no change.
+- name: Console password for {{ admin_user }} (from 1Password)
+  ansible.builtin.user:
+    name: "{{ admin_user }}"
+    password: "{{ lookup('ansible.builtin.pipe', 'op read ' ~ (vm_console_password_ref | quote)) | password_hash('sha512', (inventory_hostname | hash('sha256'))[:16]) }}"
+    update_password: always
+  no_log: true
+  tags: [console_password]

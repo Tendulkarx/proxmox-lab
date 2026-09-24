@@ -1,0 +1,56 @@
+# Prod VMs built from template 9000 (prdsrv3 onwards), listed in vms.auto.tfvars.
+# prdsrv1 and prdsrv2 are hand-built and stay in prod.tf.
+
+locals {
+  prod_node_names = {
+    prx1 = "prx-server-1"
+    prx2 = "prx-server-2"
+  }
+
+  prod_ssh_keys = [trimspace(file(pathexpand(var.ssh_public_key_file)))]
+}
+
+# Providers can't be picked per for_each item, so one module block per host.
+module "prod_vm_prx1" {
+  source    = "../../modules/prod-vm"
+  providers = { proxmox = proxmox.prx1 }
+  for_each  = { for k, v in var.prod_vms : k => v if v.node == "prx1" }
+
+  name            = each.key
+  node_name       = local.prod_node_names.prx1
+  datastore_id    = "data"
+  vm_id           = each.value.vmid
+  cores           = each.value.cores
+  memory_mb       = each.value.memory_mb
+  disk_gb         = each.value.disk_gb
+  tags            = concat(["prod", "linux"], each.value.tags)
+  ipv4_address    = "${each.value.ip}/24"
+  ssh_public_keys = local.prod_ssh_keys
+  on_boot         = true
+}
+
+module "prod_vm_prx2" {
+  source    = "../../modules/prod-vm"
+  providers = { proxmox = proxmox.prx2 }
+  for_each  = { for k, v in var.prod_vms : k => v if v.node == "prx2" }
+
+  name            = each.key
+  node_name       = local.prod_node_names.prx2
+  datastore_id    = "data"
+  vm_id           = each.value.vmid
+  cores           = each.value.cores
+  memory_mb       = each.value.memory_mb
+  disk_gb         = each.value.disk_gb
+  tags            = concat(["prod", "linux"], each.value.tags)
+  ipv4_address    = "${each.value.ip}/24"
+  ssh_public_keys = local.prod_ssh_keys
+  on_boot         = true
+}
+
+output "vms" {
+  description = "Prod VMs built from the template (prdsrv1 and prdsrv2 are in prod.tf)"
+  value = {
+    for name, vm in merge(module.prod_vm_prx1, module.prod_vm_prx2) :
+    name => "${vm.node_name}  vmid=${vm.vm_id}  ip=${vm.ipv4}  ssh turbx@${vm.ipv4}"
+  }
+}

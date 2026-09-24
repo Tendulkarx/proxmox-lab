@@ -53,6 +53,10 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 37 | Lab VMs and template 9000 use a standard VGA display (`vga: std`) with the serial port kept | Default console is noVNC like the prod VMs instead of the full-window serial terminal; xterm.js remains available from the Console menu |
 | 38 | Lab VMs install `linux-image-generic` (in `vm_baseline`) | The cloud image's `linux-image-virtual` has no bochs display driver, so the noVNC console stayed in 80x25 VGA text mode while prdsrv2 (ISO install, generic kernel) gets a 1280x800 framebuffer |
 | 39 | Lab VMs are named `tstsrv<N>`, lowest free N first, with VMID 899 + N; enforced by a validation in `terraform/envs/lab/variables.tf` | One predictable pattern: the name gives the VMID and IP (tstsrv1 = 900 = .200) |
+| 40 | New prod VMs are built from the template via `terraform/envs/prod/vms.auto.tfvars` and the `prod-vm` module; named `prdsrv<N>` with VMID 99 + N, IP = highest prod IP + 1 after checking it is free. Validations enforce the name, VMID and IP rules | Same scheme as the lab, and prdsrv1 (100) and prdsrv2 (101) already fit it. The IP can't be derived from N because prdsrv2 is pinned at .114 as the DNS server |
+| 41 | `modules/prod-vm` is a copy of `modules/vm`'s resource plus `prevent_destroy` and `reboot_after_update = false`; variables, outputs and versions are symlinks | Terraform doesn't allow `prevent_destroy` to come from a variable, so a protected VM needs its own resource block |
+| 42 | turbx gets a console password on every VM from 1Password (`proxmox-vm-console`, letters and digits), set by `vm_baseline`; SSH stays key-only | Template-built VMs had no password at all, so losing the SSH key meant no way in except from the host. Letters and digits only because noVNC can mistype symbols with a UK keyboard layout |
+| 43 | `docker_manage_daemon_json: false` is a host var on prdsrv2, not a prod group var | It protects prdsrv2's hand-built Docker; template-built prod VMs should get the managed `daemon.json` like the lab |
 
 ## Open items
 
