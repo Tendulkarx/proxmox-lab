@@ -62,6 +62,8 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 46 | prdsrv2 gets a serial port (`serial_device {}` in prod.tf) and every VM enables `serial-getty@ttyS0` | Emergency console with copy and paste (xterm.js) when SSH is down. The port needs a full stop and start, so it waits in Proxmox as a pending change until prdsrv2's next planned restart |
 | 47 | `site.yml` tags each role (`baseline`, `shell`, `docker`) | Lets one part run alone on prod without dragging in unrelated drift, e.g. `ARGS="--tags shell"` |
 | 48 | The locale goes in `/etc/locale.conf`, with `/etc/default/locale` kept as a link to it | Ubuntu 24.04's layout: systemd and services read the first, logins the second. Writing `/etc/default/locale` directly broke the link and left the two disagreeing |
+| 49 | prdsrv1's disk uses `discard = on` and `ssd = true` (was `ignore`/`false`) | Without discard, space Windows frees never reached prx1: the image grew to 121 of 128 GB with 41 GB in use, backups were 130 GB, and on 2026-09-24 the nightly backup of prdsrv1 failed for lack of room on `data` |
+| 50 | prdsrv1's server settings live in `scripts/windows/prdsrv1-settings.ps1`, run over SSH: NTP time sync, Remote Desktop limited to the home networks, Fast Startup off, OneDrive removed, Edge start-up off | Windows isn't managed by Ansible; a re-runnable script keeps the repo the record. Its personal setup (apps, terminal, look) comes from the dotfiles repo instead |
 
 ## Open items
 

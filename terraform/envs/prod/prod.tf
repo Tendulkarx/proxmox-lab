@@ -53,8 +53,11 @@ resource "proxmox_virtual_environment_vm" "prdsrv1" {
     file_format  = "qcow2"
     size         = 128
     iothread     = true
-    discard      = "ignore"
-    ssd          = false
+    # 2026-09-24: was discard "ignore": Windows' freed space never reached prx1, so the
+    # image grew to 121 of 128 GB (41 GB used) and backups were 130 GB until one failed
+    # for lack of room. discard + ssd let Windows TRIM hand the space back.
+    discard      = "on"
+    ssd          = true
   }
 
   efi_disk {
