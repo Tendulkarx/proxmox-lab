@@ -149,6 +149,18 @@
   changed_when: true
   tags: [startup]
 
+# Template 9000: standard VGA display (default console noVNC), serial port kept -------------
+- name: Template 9000 display
+  ansible.builtin.shell: |
+    set -o pipefail
+    qm config 9000 >/dev/null 2>&1 || exit 0
+    if qm config 9000 | grep -qx 'vga: std'; then echo unchanged; else qm set 9000 --vga std >/dev/null && echo changed; fi
+  args:
+    executable: /bin/bash
+  register: pve_tpl_vga
+  changed_when: "'changed' in pve_tpl_vga.stdout"
+  tags: [template]
+
 # N3: tag colours ------------------------------------------------------------------------
 - name: Tag colours
   ansible.builtin.command: pvesh set /cluster/options --tag-style '{{ pve_tag_style }}'

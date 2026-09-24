@@ -51,6 +51,8 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 35 | prdsrv3 retired: removed from Terraform prod, Ansible prod inventory and start order. Final backup taken before destroy | It was a test box duplicating prdsrv2's databases with old images, on the host with the least RAM; its SQL Server was broken |
 | 36 | OS patching via `make patch` (one VM at a time: full-upgrade, reboot only if needed, then wait until every previously running container is back). Docker log rotation is added in the same run, so the reboot applies it | Supervised and repeatable; no separate Docker restart |
 
+| 37 | Lab VMs and template 9000 use a standard VGA display (`vga: std`) with the serial port kept | Default console is noVNC like the prod VMs instead of the full-window serial terminal; xterm.js remains available from the Console menu |
+
 ## Open items
 
 - None blocking phase 1.

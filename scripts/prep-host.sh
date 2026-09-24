@@ -109,7 +109,7 @@ else
     --net0 "virtio,bridge=$BRIDGE" \
     --scsihw virtio-scsi-single \
     --agent enabled=1 \
-    --serial0 socket --vga serial0 \
+    --serial0 socket --vga std \
     --tags "template"
   qm set "$TEMPLATE_ID" --scsi0 "$STORAGE:0,import-from=$WORKDIR/$IMG_FILE,format=qcow2,discard=on,ssd=1,iothread=1"
   qm set "$TEMPLATE_ID" --ide2 "$STORAGE:cloudinit" --boot order=scsi0

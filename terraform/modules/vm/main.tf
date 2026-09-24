@@ -55,10 +55,12 @@ resource "proxmox_virtual_environment_vm" "this" {
     model  = "virtio"
   }
 
+  # Serial port kept for the text console (Console > xterm.js, copy/paste works);
+  # standard VGA makes the default console noVNC, like the prod VMs.
   serial_device {}
 
   vga {
-    type = "serial0"
+    type = "std"
   }
 
   initialization {
