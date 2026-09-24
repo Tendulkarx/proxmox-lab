@@ -74,8 +74,10 @@ running it twice changes nothing the second time.
 | `patch.yml` | (tasks) | `make patch ENV=... NAME=...` |
 | `audit.yml` | runs `scripts/audit-guest.sh` | `make audit-vms` |
 
-The `shell` role copies your dotfiles **from** `agentic-os/.../dotfiles` on the Mac, so that
-folder stays the one place you edit them.
+The `shell` role deploys your dotfiles repo (`~/development/dotfiles` on the Mac,
+github.com/Tendulkarx/dotfiles) to `~/development/dotfiles` on each VM: the committed HEAD
+only, then its `install.sh` links the files into place, as on the Mac. Commit a change there,
+then `make configure`.
 
 ### Secrets
 

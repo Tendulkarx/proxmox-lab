@@ -27,10 +27,10 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 19 | Lab IP is derived from the VMID (`10.69.20.<vmid - 700>`), with validation that VMIDs are 900 to 919 and unique | One number per VM to choose; impossible to give two VMs the same IP by mistake |
 | 20 | Terraform writes `ansible/inventory/lab.generated.yml` on every apply (git-ignored) | Ansible always targets exactly what exists; no hand-maintained inventory |
 
-| 21 | Ansible copies the shell config **from the agentic-os dotfiles folder on the Mac** (`dotfiles_dir`), not from a copy in this repo | One source of truth: edit the dotfiles there, re-run `make configure`, every VM matches |
+| 21 | *(Superseded by 45)* Ansible copies the shell config **from the agentic-os dotfiles folder on the Mac** (`dotfiles_dir`), not from a copy in this repo | One source of truth: edit the dotfiles there, re-run `make configure`, every VM matches |
 | 22 | The VM `.zshrc` is the Mac `.zshrc` verbatim plus a marked Linux block appended by Ansible | The Mac file loads plugins from `/opt/homebrew` and only runs `compinit` when Homebrew exists; the block loads the Ubuntu package paths, runs `compinit`, and removes Mac aliases that break Linux (notably `ip`, which shadows the real `ip` command) |
 | 23 | fzf and starship are installed from pinned GitHub releases; zsh plugins, eza and zoxide from apt | Ubuntu 24.04's fzf (0.44) is too old for `fzf --zsh` used in the `.zshrc`; starship isn't packaged for noble |
-| 24 | `.gitconfig` is not deployed to VMs | It carries Mac-specific settings (1Password SSH signing paths) that would break git on Linux |
+| 24 | *(Superseded by 45)* `.gitconfig` is not deployed to VMs | It carries Mac-specific settings (1Password SSH signing paths) that would break git on Linux |
 
 | 25 | Lab VMs use a separate known_hosts file, `~/.ssh/known_hosts.proxmox-lab`, cleared by `make up`, `make down` and `make destroy-lab` | Lab VMs are rebuilt at the same IPs with fresh host keys, which tripped SSH's "host identification has changed" check on first use. Your main `~/.ssh/known_hosts` stays strict for everything else, including prod |
 
@@ -58,6 +58,7 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 42 | turbx gets a console password on every VM from 1Password (`proxmox-vm-console`, letters and digits), set by `vm_baseline`; SSH stays key-only | Template-built VMs had no password at all, so losing the SSH key meant no way in except from the host. Letters and digits only because noVNC can mistype symbols with a UK keyboard layout |
 | 43 | `docker_manage_daemon_json: false` is a host var on prdsrv2, not a prod group var | It protects prdsrv2's hand-built Docker; template-built prod VMs should get the managed `daemon.json` like the lab |
 | 44 | `make up` writes `ssh/lab.generated.conf` and `ssh/prod.generated.conf` (git-ignored), and the chezmoi-managed `~/.ssh/config` includes `ssh/*.generated.conf`. prx1, prx2 and prdsrv2 are fixed entries in the chezmoi template | New VMs can be reached by name as soon as they exist, with nothing to edit by hand; there are no DNS records for them. Lab entries use the lab known_hosts file, because rebuilt VMs get new host keys |
+| 45 | The `shell` role deploys the dotfiles repo's committed HEAD (no wallpapers) to `~/development/dotfiles` on each VM and runs its `install.sh`; the Linux `.zshrc` patch block is gone. `.gitconfig` now goes to the VMs too | The dotfiles were rebuilt as one repo for every machine (Mac, Linux, later Windows): one `.zshrc` handles macOS and Linux itself, and commit signing lives in a generated per-machine file, so nothing Mac-only reaches the VMs. The VMs need no GitHub access |
 
 ## Open items
 

@@ -3,3 +3,6 @@ shell_user: turbx
 # Pinned; bump deliberately. Ubuntu's apt fzf is too old for `fzf --zsh` (needs 0.48+).
 fzf_version: "0.74.4"
 starship_version: "1.26.0"
+
+# Where the Mac builds the dotfiles archive for this run
+shell_dotfiles_archive: "{{ lookup('env', 'TMPDIR') | default('/tmp', true) }}/proxmox-lab-dotfiles.tar.gz"

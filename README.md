@@ -105,7 +105,7 @@ What the roles do:
 - `vm_baseline`: waits for cloud-init, base packages, guest agent, `Europe/London` timezone,
   `en_GB.UTF-8` locale, unattended security upgrades, SSH keys-only / no root login.
 - `shell`: zsh as login shell, starship, eza, zoxide, fzf, autosuggestions, syntax highlighting,
-  and your `.zshrc`, `.zsh/*.zsh` and `starship.toml` copied from the agentic-os dotfiles folder.
+  and your dotfiles repo (`~/development/dotfiles`, committed HEAD) linked in by its `install.sh`.
 
 ## Daily use
 

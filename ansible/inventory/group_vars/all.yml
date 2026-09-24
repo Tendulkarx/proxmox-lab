@@ -3,9 +3,9 @@ admin_user: turbx
 timezone: Europe/London
 locale: en_GB.UTF-8
 
-# Single source of truth for O'Neil's shell config: the agentic-os dotfiles folder on the Mac.
-# Ansible copies FROM here, so edit the dotfiles there, then re-run `make configure`.
-dotfiles_dir: "{{ lookup('env', 'HOME') }}/development/agentic-os/03-software-development/Software-Development-Resources/dotfiles"
+# O'Neil's dotfiles repo on the Mac (github.com/Tendulkarx/dotfiles). The shell role deploys
+# its committed HEAD to each VM: commit there, then re-run `make configure`.
+dotfiles_dir: "{{ lookup('env', 'HOME') }}/development/dotfiles"
 
 # Console (not SSH) password for admin_user on every VM: break-glass through the Proxmox
 # web console if the SSH key is lost. Read from 1Password at run time; SSH stays key-only.

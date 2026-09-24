@@ -12,7 +12,7 @@ cannot be recovered today and the order to close it.**
 | Proxmox API tokens, root and turbx passwords | 1Password (`proxmox-vm-console` is turbx's console password on every VM) | Yes |
 | SSH key `id_ed25519_homelab` | Mac only; **copy it into 1Password** as an SSH Key item | Only once copied; otherwise replaceable (see scenario 5) |
 | Terraform state | Mac only, git-ignored | No, but rebuildable by re-import |
-| Dotfiles | `agentic-os/.../dotfiles` | Yes, if pushed: agentic-os has a GitHub remote (`Tendulkarx/agentic-os`) |
+| Dotfiles | `~/development/dotfiles` | Yes, if pushed: github.com/Tendulkarx/dotfiles (private) |
 | App stacks (`/opt/docker/*` on prdsrv2) | prdsrv2 only, not in git | **No** (gap G2) |
 | VM backups (nightly 02:30, keep 2) | `data` disk of the **same** host | **No** if that disk dies (gap G3) |
 | Network (UniFi), DNS (Cloudflare) | their cloud consoles | Yes |

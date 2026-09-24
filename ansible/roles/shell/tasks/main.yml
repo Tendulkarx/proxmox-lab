@@ -1,6 +1,8 @@
 ---
 # Mirrors the Mac shell: zsh + starship + eza + zoxide + fzf + autosuggestions + syntax
-# highlighting, with O'Neil's own dotfiles copied verbatim from dotfiles_dir.
+# highlighting. The config itself is O'Neil's dotfiles repo (dotfiles_dir on the Mac):
+# its committed HEAD is deployed to ~/development/dotfiles and its install.sh links the
+# files into place, exactly as on the Mac (machines/tstsrv, machines/prdsrv: KIND=server).
 
 - name: Shell packages from apt
   ansible.builtin.apt:
@@ -47,41 +49,72 @@
     name: "{{ shell_user }}"
     shell: /usr/bin/zsh
 
-- name: Config directories
-  ansible.builtin.file:
-    path: "/home/{{ shell_user }}/{{ item }}"
-    state: directory
-    owner: "{{ shell_user }}"
-    group: "{{ shell_user }}"
-    mode: "0755"
-  loop:
-    - .zsh
-    - .config
+# ---- Dotfiles repo ------------------------------------------------------------------------
+# The committed HEAD only (uncommitted edits on the Mac are not deployed), without the
+# wallpapers. Built once per run on the Mac.
+- name: Dotfiles archive of HEAD on the Mac
+  ansible.builtin.shell: |
+    set -eu
+    git -C {{ dotfiles_dir | quote }} archive --format=tar.gz -o {{ shell_dotfiles_archive | quote }} HEAD -- . ':!wallpapers'
+    git -C {{ dotfiles_dir | quote }} rev-parse HEAD
+  register: shell_dotfiles_head
+  delegate_to: localhost
+  become: false
+  run_once: true
+  changed_when: false
+  check_mode: false
 
-- name: Copy dotfiles verbatim from the Mac
+- name: Dotfiles archive on the VM
   ansible.builtin.copy:
-    src: "{{ dotfiles_dir }}/{{ item }}"
-    dest: "/home/{{ shell_user }}/{{ item }}"
-    owner: "{{ shell_user }}"
-    group: "{{ shell_user }}"
+    src: "{{ shell_dotfiles_archive }}"
+    dest: /tmp/dotfiles.tar.gz
     mode: "0644"
-  loop:
-    - .zsh/aliases.zsh
-    - .zsh/functions.zsh
-    - .zsh/starship.zsh
-    - .config/starship.toml
+  check_mode: false  # a scratch file; lets a dry run preview install.sh below
+  changed_when: false
 
-# The Mac .zshrc loads plugins from /opt/homebrew and only runs compinit when brew exists,
-# so the VM gets: your .zshrc verbatim + a clearly marked Linux block appended at the end.
-- name: .zshrc (Mac original + Linux additions)
-  ansible.builtin.copy:
-    dest: "/home/{{ shell_user }}/.zshrc"
-    content: |
-      {{ lookup('ansible.builtin.file', dotfiles_dir + '/.zshrc') }}
+# Unpacks into a fresh folder and swaps it in, so files deleted from the repo disappear
+# too. Skipped when that commit is already deployed.
+- name: Dotfiles repo at ~/development/dotfiles ({{ shell_dotfiles_head.stdout_lines[-1][:7] }})
+  ansible.builtin.shell: |
+    set -eu
+    cd ~/development 2>/dev/null || { mkdir -p ~/development && cd ~/development; }
+    [ "$(cat dotfiles/.commit 2>/dev/null)" = "{{ shell_dotfiles_head.stdout_lines[-1] }}" ] && { echo unchanged; exit 0; }
+    rm -rf dotfiles.new && mkdir dotfiles.new
+    tar -xzf /tmp/dotfiles.tar.gz -C dotfiles.new
+    echo "{{ shell_dotfiles_head.stdout_lines[-1] }}" > dotfiles.new/.commit
+    rm -rf dotfiles.old; [ -d dotfiles ] && mv dotfiles dotfiles.old
+    mv dotfiles.new dotfiles && rm -rf dotfiles.old
+    echo deployed
+  args:
+    executable: /bin/bash
+  become_user: "{{ shell_user }}"
+  register: shell_dotfiles_deploy
+  changed_when: "'deployed' in shell_dotfiles_deploy.stdout"
 
-      # >>> proxmox-lab Linux additions (managed by Ansible: ansible/roles/shell) >>>
-      {{ lookup('ansible.builtin.template', 'zshrc-linux.zsh.j2') }}
-      # <<< proxmox-lab Linux additions <<<
-    owner: "{{ shell_user }}"
-    group: "{{ shell_user }}"
-    mode: "0644"
+- name: Link the dotfiles into place (install.sh)
+  ansible.builtin.command: /home/{{ shell_user }}/development/dotfiles/install.sh
+  become_user: "{{ shell_user }}"
+  register: shell_dotfiles_install
+  changed_when: >-
+    shell_dotfiles_install.stdout is search('(: link|: back up|: create|: update)')
+  when: not ansible_check_mode
+
+# Dry run: preview install.sh from a scratch copy of the same commit
+- name: Preview install.sh (dry run)
+  ansible.builtin.shell: |
+    set -eu
+    rm -rf /tmp/dotfiles-preview && mkdir /tmp/dotfiles-preview
+    tar -xzf /tmp/dotfiles.tar.gz -C /tmp/dotfiles-preview
+    /tmp/dotfiles-preview/install.sh --dry-run | sed 's|/tmp/dotfiles-preview|~/development/dotfiles|g'
+  args:
+    executable: /bin/bash
+  become_user: "{{ shell_user }}"
+  register: shell_dotfiles_preview
+  check_mode: false
+  changed_when: false
+  when: ansible_check_mode
+
+- name: install.sh preview
+  ansible.builtin.debug:
+    var: shell_dotfiles_preview.stdout_lines
+  when: ansible_check_mode
