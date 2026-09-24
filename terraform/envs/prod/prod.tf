@@ -154,6 +154,11 @@ resource "proxmox_virtual_environment_vm" "prdsrv2" {
     firewall    = true
   }
 
+  # Serial port for the Proxmox xterm.js console (copy and paste work there): emergency
+  # access when SSH is down. Added 2026-09-24; takes effect at prdsrv2's next full stop and
+  # start. Ansible enables the matching login prompt (serial-getty@ttyS0).
+  serial_device {}
+
   operating_system {
     type = "l26"
   }

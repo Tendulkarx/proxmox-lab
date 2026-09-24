@@ -117,3 +117,10 @@ test1: clean. Both hosts: clean apart from the items above.
 | V9 | prdsrv2 | Most images on `:latest` | | Pin versions (already planned in the vault notes) |
 
 Noise, not problems: Arcane `context canceled` (page navigation), Metabase `reset from ERROR state` (INFO lines), prdsrv3 `postgres_db` errors (all from the disk-full episode; healthy now).
+
+## Open items (2026-09-24)
+
+| Item | Detail | Action |
+|---|---|---|
+| prdsrv2 serial port pending | Added in Proxmox, applies at the next full stop and start (`qm pending 101` shows `serial0`) | Next time prdsrv2 needs a restart (e.g. after `make patch`), do a full stop and start: `ssh prx1 'qm shutdown 101 && qm start 101'`. Outage 1 to 2 minutes: DNS, Caddy, all apps |
+| prdsrv2 locale | `/etc/default/locale` is `en_US.UTF-8` (a link to `/etc/locale.conf`); `vm_baseline` wants `en_GB.UTF-8`. Left alone on 2026-09-24 | Decide: accept `en_GB` (services pick it up on restart; affects date and number formats) or set `locale: en_US.UTF-8` for prdsrv2 in the inventory |

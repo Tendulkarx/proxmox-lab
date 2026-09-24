@@ -110,3 +110,12 @@
     update_password: always
   no_log: true
   tags: [console_password]
+
+# Login prompt on the serial port, for the Proxmox xterm.js console (copy and paste work
+# there, unlike noVNC). Template VMs get it from console=ttyS0; hand-built ones need it
+# enabled. It stays idle until the VM has a serial port (Terraform serial_device).
+- name: Serial console login (serial-getty@ttyS0)
+  ansible.builtin.systemd:
+    name: serial-getty@ttyS0.service
+    enabled: true
+  tags: [serial_console]

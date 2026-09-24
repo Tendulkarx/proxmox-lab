@@ -21,7 +21,8 @@ cannot be recovered today and the order to close it.**
 Break-glass access when SSH keys are gone: each host's web UI or physical console as
 `root@pam` (password in 1Password), then the VM console in the Proxmox UI as `turbx` with the
 `proxmox-vm-console` password from 1Password (set on every VM by `vm_baseline`; the console
-accepts it, SSH never does).
+accepts it, SSH never does). Use Console > **xterm.js** where the VM has a serial port (template
+VMs; prdsrv2 after its next restart): it accepts paste. noVNC doesn't, so type it there.
 
 ## Scenarios
 

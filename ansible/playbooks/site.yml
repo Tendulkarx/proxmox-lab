@@ -4,7 +4,8 @@
 - name: Baseline and shell for Linux VMs
   hosts: all
   become: true
+  # Role tags let one part run alone, e.g. ARGS="--tags shell"
   roles:
-    - vm_baseline
-    - shell
-    - docker
+    - { role: vm_baseline, tags: [baseline] }
+    - { role: shell, tags: [shell] }
+    - { role: docker, tags: [docker] }
