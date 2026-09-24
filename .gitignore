@@ -18,3 +18,6 @@ audit/
 # terraform import scratch output
 terraform/envs/prod/generated.tf
 terraform/envs/prod/generated.tf.orig
+
+# SSH config snippets written by Terraform, included from ~/.ssh/config
+ssh/*.generated.conf

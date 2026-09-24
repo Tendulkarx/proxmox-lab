@@ -17,6 +17,7 @@ tstsrv3 = { vmid = 902, cores = 4, memory_mb = 4096, disk_gb = 40, tags = ["dock
 ```
 
 Or in Claude Code: `/new-vm 4 4096 40`. Remove it by deleting the line and `make up`.
+Once it exists, `ssh tstsrv<N>` works from the Mac (see decision 44).
 
 ### Change a prod VM's hardware
 
@@ -49,6 +50,7 @@ Built from the template, so it is fully reproducible from code. The `prod-vm` mo
    `prdsrv3 = { vmid = 102, ip = "10.69.20.115", cores = 4, memory_mb = 8192, disk_gb = 60 }`
 3. `make plan ENV=prod` (expect 1 to add), then `make up ENV=prod`.
 4. Add it to `ansible/inventory/prod.yml`, then `make configure ENV=prod NAME=<vm>`.
+   `ssh <vm>` works from the Mac straight after step 3.
 5. Start order: add its VMID to `pve_startup` in `ansible/roles/pve_host/defaults/main.yml`,
    then `make hosts-check` and `make hosts`. The nightly backup picks it up automatically
    (only the lab VMIDs are excluded).

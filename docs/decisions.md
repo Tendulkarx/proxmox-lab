@@ -57,6 +57,7 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 41 | `modules/prod-vm` is a copy of `modules/vm`'s resource plus `prevent_destroy` and `reboot_after_update = false`; variables, outputs and versions are symlinks | Terraform doesn't allow `prevent_destroy` to come from a variable, so a protected VM needs its own resource block |
 | 42 | turbx gets a console password on every VM from 1Password (`proxmox-vm-console`, letters and digits), set by `vm_baseline`; SSH stays key-only | Template-built VMs had no password at all, so losing the SSH key meant no way in except from the host. Letters and digits only because noVNC can mistype symbols with a UK keyboard layout |
 | 43 | `docker_manage_daemon_json: false` is a host var on prdsrv2, not a prod group var | It protects prdsrv2's hand-built Docker; template-built prod VMs should get the managed `daemon.json` like the lab |
+| 44 | `make up` writes `ssh/lab.generated.conf` and `ssh/prod.generated.conf` (git-ignored), and the chezmoi-managed `~/.ssh/config` includes `ssh/*.generated.conf`. prx1, prx2 and prdsrv2 are fixed entries in the chezmoi template | New VMs can be reached by name as soon as they exist, with nothing to edit by hand; there are no DNS records for them. Lab entries use the lab known_hosts file, because rebuilt VMs get new host keys |
 
 ## Open items
 
