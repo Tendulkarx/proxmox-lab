@@ -61,6 +61,7 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 45 | The `shell` role deploys the dotfiles repo's committed HEAD (no wallpapers) to `~/development/dotfiles` on each VM and runs its `install.sh`; the Linux `.zshrc` patch block is gone. `.gitconfig` now goes to the VMs too | The dotfiles were rebuilt as one repo for every machine (Mac, Linux, later Windows): one `.zshrc` handles macOS and Linux itself, and commit signing lives in a generated per-machine file, so nothing Mac-only reaches the VMs. The VMs need no GitHub access |
 | 46 | prdsrv2 gets a serial port (`serial_device {}` in prod.tf) and every VM enables `serial-getty@ttyS0` | Emergency console with copy and paste (xterm.js) when SSH is down. The port needs a full stop and start, so it waits in Proxmox as a pending change until prdsrv2's next planned restart |
 | 47 | `site.yml` tags each role (`baseline`, `shell`, `docker`) | Lets one part run alone on prod without dragging in unrelated drift, e.g. `ARGS="--tags shell"` |
+| 48 | The locale goes in `/etc/locale.conf`, with `/etc/default/locale` kept as a link to it | Ubuntu 24.04's layout: systemd and services read the first, logins the second. Writing `/etc/default/locale` directly broke the link and left the two disagreeing |
 
 ## Open items
 

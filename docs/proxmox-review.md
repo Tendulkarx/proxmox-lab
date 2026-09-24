@@ -123,4 +123,4 @@ Noise, not problems: Arcane `context canceled` (page navigation), Metabase `rese
 | Item | Detail | Action |
 |---|---|---|
 | prdsrv2 serial port | Done 2026-09-24: prdsrv2 restarted, `serial0` live, serial-getty active, 14 containers up, Pi-hole answering | None: Console > xterm.js now works on prdsrv2 |
-| prdsrv2 locale | `/etc/default/locale` is `en_US.UTF-8` (a link to `/etc/locale.conf`); `vm_baseline` wants `en_GB.UTF-8`. Left alone on 2026-09-24 | Decide: accept `en_GB` (services pick it up on restart; affects date and number formats) or set `locale: en_US.UTF-8` for prdsrv2 in the inventory |
+| prdsrv2 locale | Done 2026-09-24: set to `en_GB.UTF-8` like the other VMs. The baseline task was also fixed: it replaced the `/etc/default/locale` link, so tstsrv1's system locale had stayed `C.UTF-8` | Running services switch to it at their next restart |

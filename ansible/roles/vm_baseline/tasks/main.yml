@@ -64,11 +64,23 @@
     name: "{{ locale }}"
     state: present
 
-- name: Default locale
+# Ubuntu 24.04 keeps the system locale in /etc/locale.conf (read by systemd and services)
+# with /etc/default/locale as a link to it (read at login). Writing /etc/default/locale
+# directly replaced the link and left the two disagreeing.
+- name: System locale
   ansible.builtin.copy:
-    dest: /etc/default/locale
+    dest: /etc/locale.conf
     content: "LANG={{ locale }}\n"
     mode: "0644"
+  tags: [locale]
+
+- name: /etc/default/locale links to /etc/locale.conf
+  ansible.builtin.file:
+    src: ../locale.conf
+    dest: /etc/default/locale
+    state: link
+    force: true
+  tags: [locale]
 
 - name: Unattended security upgrades enabled
   ansible.builtin.copy:
