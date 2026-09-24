@@ -10,6 +10,8 @@ Safe to re-run; prints only what it changes. Run over SSH from the Mac:
      and pending hardware changes rely on
   4. OneDrive removed and kept from coming back (not used); ~\OneDrive files are left alone
   5. Edge no longer starts itself at sign-in (Startup boost off)
+  6. Remote Desktop picture quality: full-colour H.264 (AVC 4:4:4), 60 frames a second, and
+     the GPU for encoding when it works. Applies from the next Remote Desktop connection.
 #>
 $ErrorActionPreference = 'Stop'
 function Say($m) { Write-Host $m }
@@ -65,4 +67,12 @@ Get-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run | Get-Membe
         Remove-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Run -Name $_.Name
         Say "  removed start-up entry $($_.Name)"
     }
+Say '-- 6. Remote Desktop picture quality'
+$ts = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
+Set-Reg $ts AVC444ModePreferred 1          # Prioritize H.264/AVC 444 graphics mode
+Set-Reg $ts AVCHardwareEncodePreferred 1   # Configure H.264/AVC hardware encoding
+Set-Reg $ts bEnumerateHWBeforeSW 1         # Use hardware graphics adapters for all RDS sessions
+# 60 fps instead of the default 30 (frame interval in ms)
+Set-Reg 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations' DWMFRAMEINTERVAL 15
+
 Say 'done'

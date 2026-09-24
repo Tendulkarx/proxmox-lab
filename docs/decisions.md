@@ -64,6 +64,7 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 48 | The locale goes in `/etc/locale.conf`, with `/etc/default/locale` kept as a link to it | Ubuntu 24.04's layout: systemd and services read the first, logins the second. Writing `/etc/default/locale` directly broke the link and left the two disagreeing |
 | 49 | prdsrv1's disk uses `discard = on` and `ssd = true` (was `ignore`/`false`) | Without discard, space Windows frees never reached prx1: the image grew to 121 of 128 GB with 41 GB in use, backups were 130 GB, and on 2026-09-24 the nightly backup of prdsrv1 failed for lack of room on `data` |
 | 50 | prdsrv1's server settings live in `scripts/windows/prdsrv1-settings.ps1`, run over SSH: NTP time sync, Remote Desktop limited to the home networks, Fast Startup off, OneDrive removed, Edge start-up off | Windows isn't managed by Ansible; a re-runnable script keeps the repo the record. Its personal setup (apps, terminal, look) comes from the dotfiles repo instead |
+| 51 | prdsrv1's Remote Desktop uses H.264/AVC 4:4:4 at 60 fps with hardware encoding preferred (policy settings in `prdsrv1-settings.ps1`) | O'Neil uses prdsrv1 over Remote Desktop and wants it to look and feel like a real PC: 4:4:4 keeps full colour detail, 60 fps is smoother than the default 30, and a working GPU takes the encoding off the CPU |
 
 ## Open items
 
