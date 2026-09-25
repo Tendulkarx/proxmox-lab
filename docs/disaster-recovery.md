@@ -8,7 +8,7 @@ cannot be recovered today and the order to close it.**
 
 | Item | Where it lives today | Survives losing the Mac? |
 |---|---|---|
-| This repo (all code and docs) | Mac only, local git | **No** (gap G1) |
+| This repo (all code and docs) | Mac, and github.com/Tendulkarx/proxmox-lab (private) since 2026-09-25 | Yes |
 | Proxmox API tokens, root and turbx passwords | 1Password (`proxmox-vm-console` is turbx's console password on every VM) | Yes |
 | SSH key `id_ed25519_homelab` | Mac, and 1Password (SSH Key item `id_ed25519_homelab`, vault Development, since 2026-09-24) | Yes |
 | Terraform state | Mac only, git-ignored | No, but rebuildable by re-import |
@@ -77,7 +77,7 @@ The VM disks on the NVMe `data` disk survive; the VM definitions in `/etc/pve` d
 ### 5. The Mac is lost or wiped
 
 1. Tools: `brew install hashicorp/tap/terraform 1password-cli ansible`, sign in to 1Password.
-2. Repo: clone it from the private remote (**needs gap G1 closed**).
+2. Repo: `git clone git@github.com:Tendulkarx/proxmox-lab.git ~/development/proxmox-lab`.
 3. SSH key: in 1Password open `id_ed25519_homelab`, export the private key to
    `~/.ssh/id_ed25519_homelab` (`chmod 600`) and save its public key as `.pub` next to it. Only
    if that item is gone too: `ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_homelab`, then log in to each host's web
@@ -171,7 +171,7 @@ Done when every host and VM report is clean, `make plan` and `make plan ENV=prod
 
 | # | Gap | Risk | Fix | Effort |
 |---|---|---|---|---|
-| G1 | Repo exists only on the Mac | Lose the Mac, lose all the code and docs | Push to a private GitHub (or Gitea) repo; commit after every change | 5 min |
+| ~~G1~~ | ~~Repo exists only on the Mac~~ | **Closed 2026-09-25**: pushed to github.com/Tendulkarx/proxmox-lab (private) | Push after every commit | |
 | G3 | Backups live on the same disk as the VMs; nothing offsite | One disk failure loses VMs and backups together | Proxmox Backup Server on prx2 (1 TB); prx1 backs up to it. Then sync to Google Drive or a cloud bucket | an evening |
 | G2 | prdsrv2's app stacks are hand-managed and not in git | Rebuilding prdsrv2 without a backup means recreating every stack by hand | `stacks/` folder plus an Ansible `stacks` role; secrets via 1Password; pin image versions | a weekend |
 | G4 | No database dumps | Can only restore a whole VM, not one database; crash-consistent at best | Nightly `pg_dump`, SQL Server `BACKUP DATABASE`, Oracle `expdp` into a backup folder picked up by the VM backup | an evening |
@@ -180,7 +180,7 @@ Done when every host and VM report is clean, `make plan` and `make plan ENV=prod
 | G7 | prdsrv1 (Windows) exists only as a VM and its backup | No rebuild path | Accept (backup only), or document its setup | optional |
 | G8 | Restores have never been tested | You find out at the worst moment | Quarterly drill: restore prdsrv2's backup to VMID 919 with the NIC disconnected, boot it, check the apps' data, delete it | 30 min each quarter |
 
-Until G1 and G3 are closed, the realistic worst case is: **a failed NVMe on prx1 loses
+Until G3 is closed, the realistic worst case is: **a failed NVMe on prx1 loses
 prdsrv2 and every service on it, with no way back.** Those two are the priority.
 
 ## Drills

@@ -6,7 +6,7 @@ Where everything lives and how each machine is set up. Updated 2026-09-25.
 
 | Where | What it holds | Changed by |
 |---|---|---|
-| `~/development/proxmox-lab` (this repo) | Proxmox hosts, VMs (Terraform), what runs inside the Linux VMs (Ansible), prdsrv1's Windows scripts, and these docs | `make ...` / `lab ...`, then commit |
+| `~/development/proxmox-lab` (this repo; github.com/Tendulkarx/proxmox-lab, private) | Proxmox hosts, VMs (Terraform), what runs inside the Linux VMs (Ansible), prdsrv1's Windows scripts, and these docs | `make ...` / `lab ...`, then commit |
 | `~/development/dotfiles` (github.com/Tendulkarx/dotfiles, private) | Your settings and apps on every machine: shell, git, SSH, terminal looks, wallpaper, app lists, macOS and Windows preferences | Edit the linked file, commit; `dot sync` elsewhere |
 | `~/development/agentic-os` (github.com/Tendulkarx/agentic-os) | Claude's memory and area notes; `07-home-tech` covers the lab | Claude sessions |
 | `~/development/obsidian/ob` | Your knowledge vault: guides, decisions, to-dos | You and Claude |
