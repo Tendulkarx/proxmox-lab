@@ -10,6 +10,9 @@
 #   make backup-vm HOST=<ip> VMID=<id>   one-off backup of a VM to that host's `data` storage
 #   make patch ENV=prod NAME=prdsrv2      OS updates + reboot if needed, one VM at a time
 #   make audit              read-only audit of hosts AND all VMs; reports land in audit/
+#   make status             one screen: hosts, VMs, pending hardware changes, backup disk, last backup
+#   make backup NAME=prdsrv1          one-off backup of a VM by name (finds its host and VMID)
+#   make restart NAME=prdsrv1         FULL stop and start (applies pending hardware changes); asks first
 #   make prod-generate      Phase 4: describe existing prod VMs as Terraform (no changes made)
 
 ENV ?= lab
@@ -21,7 +24,7 @@ LAB_KNOWN_HOSTS := $(HOME)/.ssh/known_hosts.proxmox-lab
 .PHONY: help check init plan up list down destroy-lab ssh fmt validate ansible-deps configure forget-host hosts hosts-check prod-generate
 
 help:
-	@sed -n '2,14p' Makefile
+	@sed -n '2,17p' Makefile
 
 check:
 	@command -v terraform >/dev/null || { echo "Install terraform: brew install hashicorp/tap/terraform"; exit 1; }
@@ -121,3 +124,21 @@ patch:
 	@inv=ansible/inventory/$(ENV).yml; test -f $$inv || inv=ansible/inventory/$(ENV).generated.yml; \
 	  cd ansible && ANSIBLE_SSH_ARGS="-o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=accept-new $(if $(filter lab,$(ENV)),-o UserKnownHostsFile=$(LAB_KNOWN_HOSTS),)" \
 	  ansible-playbook -i ../$$inv playbooks/patch.yml --limit $(NAME) $(ARGS)
+
+.PHONY: status backup restart
+status:
+	@scripts/status.sh
+
+backup:
+	@test -n "$(NAME)" || { echo "Usage: make backup NAME=<vm>"; exit 1; }
+	@set -- $$(scripts/vm-locate.sh $(NAME)) && $(MAKE) --no-print-directory backup-vm HOST=$$1 VMID=$$2
+
+# A restart from inside the guest keeps the old virtual hardware; only a full stop and start
+# applies pending changes. Prod VMs are O'Neil's call, so this always asks first.
+restart:
+	@test -n "$(NAME)" || { echo "Usage: make restart NAME=<vm>"; exit 1; }
+	@set -- $$(scripts/vm-locate.sh $(NAME)) && \
+	  printf 'Full stop and start of %s (VMID %s on %s). Its services are down for 1 to 2 minutes. Type yes: ' "$(NAME)" "$$2" "$$1" && \
+	  read ans && [ "$$ans" = yes ] || { echo "cancelled"; exit 1; }; \
+	  set -- $$(scripts/vm-locate.sh $(NAME)); \
+	  ssh -i ~/.ssh/id_ed25519_homelab root@$$1 "qm shutdown $$2 --timeout 240 && qm start $$2 && qm status $$2"
