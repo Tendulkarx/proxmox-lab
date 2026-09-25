@@ -36,10 +36,14 @@ Or just ask in plain English: "resize prdsrv2 to 6 cores", "why is Pi-hole slow?
 
 ## Commands (without Claude)
 
-`make help` is the full list. The ones you will use most:
+From any folder, `lab <command>` runs the make target here (`lab` alone goes to the repo);
+`cheat` lists every custom command. `make help` is the full list. The ones you will use most:
 
 | Task | Command |
 |---|---|
+| How is everything? | `lab status`: hosts, VMs, pending hardware changes, backup disk, last nightly backup |
+| Backup a VM now | `lab backup prdsrv1` |
+| Apply pending hardware changes | `lab restart prdsrv1` (full stop and start; asks first) |
 | New lab VM | add a line to `terraform/envs/lab/vms.auto.tfvars`, then `make up` and `make configure` |
 | Remove lab VM | delete its line and `make up`, or `make down NAME=<vm>` |
 | Log in | `make ssh NAME=<vm>` |
@@ -48,7 +52,6 @@ Or just ask in plain English: "resize prdsrv2 to 6 cores", "why is Pi-hole slow?
 | Apply prod changes | `make up ENV=prod` |
 | Re-apply VM config | `make configure ENV=prod` / `ENV=lab` |
 | Host hardening | `make hosts-check`, then `make hosts` |
-| Backup a VM now | `make backup-vm HOST=10.69.20.130 VMID=101` |
 | Patch a VM | `make patch ENV=prod NAME=prdsrv2` |
 
 ## When something goes wrong
@@ -57,5 +60,8 @@ Or just ask in plain English: "resize prdsrv2 to 6 cores", "why is Pi-hole slow?
 - `Missing sudo password` on a new hand-built VM: run `make configure ... ARGS="-K"` once.
 - Terraform `403 Permission check failed (/, Sys.Modify)`: that setting is host-level; it
   belongs in `ansible/roles/pve_host` (see decision 11 and the start-order change).
-- A prod VM restart is always manual:
-  `ssh -i ~/.ssh/id_ed25519_homelab root@<host> 'qm shutdown <vmid> && qm start <vmid>'`.
+- A prod VM restart is always your call: `lab restart <vm>` (it asks first). A restart from
+  inside the guest does **not** apply hardware changes; `lab status` shows any still pending.
+- The backup disk filling up, or backups growing: `docs/reclaim-disk-space.md`.
+- Windows (prdsrv1): `docs/prdsrv1-windows.md`. Setting up any Windows or Mac machine: the
+  dotfiles README and its troubleshooting section.
