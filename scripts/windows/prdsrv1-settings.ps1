@@ -5,7 +5,8 @@ Safe to re-run; prints only what it changes. Run over SSH from the Mac:
   scp scripts/windows/prdsrv1-settings.ps1 prdsrv1: && ssh prdsrv1 '.\prdsrv1-settings.ps1'
 
   1. Time: sync over NTP (it was running on its own clock, "Local CMOS Clock")
-  2. Remote Desktop: only from the server VLAN, home network and VPN (it was open to any address)
+  2. Remote Desktop and SSH: only from the server VLAN (10.69.20.0/24), the home network
+     (10.69.10.0/24) and the VPN (10.69.2.0/24). Remote Desktop was open to any address
   3. Fast Startup off: "shut down" becomes a real shutdown, which Proxmox's clean shutdowns
      and pending hardware changes rely on
   4. OneDrive removed and kept from coming back (not used); ~\OneDrive files are left alone
@@ -35,11 +36,14 @@ if ($cfg -notmatch [regex]::Escape('NtpServer: time.cloudflare.com')) {
 w32tm /resync /force | Out-Null
 Say ('  source now: ' + ((w32tm /query /source) -join '').Trim())
 
-Say '-- 2. Remote Desktop only from home networks'
-$allowed = '10.69.20.0/24', '192.168.1.0/24', '10.69.2.0/24'
-foreach ($rule in Get-NetFirewallRule -DisplayGroup 'Remote Desktop' | Where-Object Direction -eq 'Inbound') {
+Say '-- 2. Remote Desktop and SSH only from home networks'
+$allowed = '10.69.20.0/24', '10.69.10.0/24', '10.69.2.0/24'
+$rules = @(Get-NetFirewallRule -DisplayGroup 'Remote Desktop' | Where-Object Direction -eq 'Inbound') +
+         @(Get-NetFirewallRule -Name 'OpenSSH-Server-In-TCP' -ErrorAction SilentlyContinue)
+foreach ($rule in $rules) {
     $now = @(($rule | Get-NetFirewallAddressFilter).RemoteAddress)
-    if (($now -join ',') -notmatch '10\.69\.20\.0') {
+    $want = $allowed | ForEach-Object { $_ -replace '/24$', '/255.255.255.0' }
+    if ((($now | Sort-Object) -join ',') -ne (($want | Sort-Object) -join ',')) {
         $rule | Set-NetFirewallRule -RemoteAddress $allowed
         Say "  $($rule.Name): $($allowed -join ', ') (was $($now -join ', '))"
     }
