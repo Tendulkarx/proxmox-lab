@@ -62,6 +62,7 @@ sec "Backups"
 run "cat /etc/pve/jobs.cfg 2>/dev/null || echo 'no backup jobs defined'"
 run "cat /etc/vzdump.conf | grep -v '^#'"
 run "for s in \$(pvesm status --content backup 2>/dev/null | awk 'NR>1{print \$1}'); do echo \"== \$s\"; pvesm list \$s --content backup 2>/dev/null | tail -n +2 | awk '{print \$1, \$4}' | tail -10; done"
+run "systemctl list-timers pve-backup-copy.timer --no-pager 2>/dev/null | head -2; journalctl -u pve-backup-copy.service -n 3 --no-pager -o short 2>/dev/null || echo 'no backup copy on this host'"
 
 sec "Access and security"
 run "pveum user list --output-format json | python3 -c 'import sys,json;[print(u[\"userid\"], \"enabled=\"+str(u.get(\"enable\",1)), \"tfa=\"+str(bool(u.get(\"keys\") or u.get(\"tfa-locked-until\") is not None))) for u in json.load(sys.stdin)]'"

@@ -169,3 +169,15 @@ Source: `make audit`. prdsrv3 is retired and test1 is now tstsrv1, so `audit/vm-
 | B3 | prdsrv2 `REBOOT REQUIRED linux-image-6.8.0-142-generic`; both hosts `pending upgrades: 4` | Kernel fixes aren't live until a restart | `make patch ENV=prod NAME=prdsrv2` in a window of O'Neil's choosing (DNS, Caddy and all apps down about 2 minutes); host upgrades via `pve_host` |
 | B4 | Template 9000 backed up nightly on both hosts (`vzdump-qemu-9000-...` 0.7 GB each) | Rebuilt by `make`, so the copies only use space | Decide: add 9000 to the job's exclude list |
 | B5 | prx2 holds `vzdump-qemu-100-2026_09_22-23_11_48` (18 GB): prdsrv3's final backup | Nothing prunes it | Decide: keep until a set date, then delete |
+
+### Done 2026-09-27
+
+- **B1:** prx1's backups are mirrored to prx2 at 06:00 (`pve-backup-copy`), only when the last
+  nightly run logged no errors. First copy 00:11: 19 files, checksums match; prx2 shows them as
+  storage `prx1-copy`. `make audit` reports the copy's last run.
+- **B4:** template 9000 excluded from the nightly job. Its two old backups per host stay until deleted.
+- **B5:** prdsrv3's final backup deleted from prx2.
+- tstsrv1 destroyed; no lab VMs.
+- **V2 cause found:** Redis runs as UID 999, its folder `/opt/docker/paperless/data/redis` is
+  owned by 1000. `stop-writes-on-bgsave-error` is `no`, so Paperless isn't stalled, but nothing
+  has been saved since 3 Sep. Fix: `sudo chown -R 999:999` on that folder, then `redis-cli BGSAVE`.

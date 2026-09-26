@@ -6,6 +6,8 @@ all:
         prx1:
           ansible_host: 10.69.20.130
           pve_node: prx-server-1
+          # prx1's backups share a disk with its VMs: copy them to prx2's 1 TB disk
+          pve_backup_copy_to: prx2
         prx2:
           ansible_host: 10.69.20.131
           pve_node: prx-server-2

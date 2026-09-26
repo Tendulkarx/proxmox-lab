@@ -130,6 +130,140 @@
   changed_when: true
   tags: [backups]
 
+# B1: copy backups to the other host ------------------------------------------------------
+# The key may only run rrsync into one folder on the target, so it can't do anything else there.
+- name: Backup copy to {{ pve_backup_copy_to | default('another host') }}
+  when: pve_backup_copy_to is defined
+  tags: [backup_copy]
+  vars:
+    # default only so delegate_to can be templated on hosts that skip this block
+    pve_copy_host: "{{ pve_backup_copy_to | default(inventory_hostname) }}"
+    pve_copy_ip: "{{ hostvars[pve_copy_host].ansible_host }}"
+    pve_copy_id: "{{ inventory_hostname }}-copy"
+    pve_copy_path: "/mnt/pve/data/{{ inventory_hostname }}-copy"
+  block:
+    - name: SSH key for the copy
+      ansible.builtin.command: >
+        ssh-keygen -q -t ed25519 -N '' -C 'backup-copy {{ inventory_hostname }}'
+        -f /root/.ssh/id_ed25519_backup_copy
+      args:
+        creates: /root/.ssh/id_ed25519_backup_copy
+
+    - name: Read the copy key
+      ansible.builtin.slurp:
+        src: /root/.ssh/id_ed25519_backup_copy.pub
+      register: pve_copy_pub
+      failed_when: false  # absent in a dry run on the first pass
+
+    - name: Folder for the copies on {{ pve_copy_host }}
+      ansible.builtin.file:
+        path: "{{ pve_copy_path }}/dump"
+        state: directory
+        mode: "0755"
+      delegate_to: "{{ pve_copy_host }}"
+
+    # authorized_keys2, not authorized_keys: that one is a link into /etc/pve (pmxcfs)
+    - name: Restricted key on {{ pve_copy_host }} (rrsync into the copy folder only)
+      ansible.builtin.lineinfile:
+        path: /root/.ssh/authorized_keys2
+        create: true
+        mode: "0600"
+        regexp: 'backup-copy {{ inventory_hostname }}$'
+        line: >-
+          command="/usr/bin/rrsync {{ pve_copy_path }}/dump",restrict
+          {{ pve_copy_pub.content | b64decode | trim }}
+      delegate_to: "{{ pve_copy_host }}"
+      when: pve_copy_pub.content is defined
+
+    - name: Read {{ pve_copy_host }}'s host key
+      ansible.builtin.slurp:
+        src: /etc/ssh/ssh_host_ed25519_key.pub
+      register: pve_copy_hostkey
+      delegate_to: "{{ pve_copy_host }}"
+
+    - name: Known host for the copy
+      ansible.builtin.copy:
+        dest: /root/.ssh/known_hosts_backup_copy
+        mode: "0600"
+        content: "{{ pve_copy_ip }} {{ (pve_copy_hostkey.content | b64decode).split()[:2] | join(' ') }}\n"
+
+    - name: Copy script
+      ansible.builtin.copy:
+        dest: /usr/local/sbin/pve-backup-copy
+        mode: "0755"
+        content: |
+          #!/bin/bash
+          # Managed by Ansible (proxmox-lab): mirror this host's backups to {{ pve_copy_host }}.
+          set -euo pipefail
+          src=/mnt/pve/data/dump
+          # A mirror deletes what the source lacks: never run against a missing or empty source
+          mountpoint -q /mnt/pve/data || { echo "/mnt/pve/data not mounted; not copying"; exit 1; }
+          compgen -G "$src/vzdump-*.vma.zst" >/dev/null || { echo "no backups in $src; not copying"; exit 1; }
+          # Only after a successful nightly run: the copy then holds the same last two good
+          # backups per VM as this host. On failure it is left alone, still holding the last good pair.
+          recent=$(find "$src" -name 'vzdump-*.log' -mmin -1440)
+          [ -n "$recent" ] || { echo "no backup in the last 24 hours; not copying"; exit 1; }
+          if grep -l 'ERROR:' $recent; then echo "last backup logged errors (files above); not copying"; exit 1; fi
+          rsync -a --delete --max-delete=30 --partial --exclude='*.tmp' --exclude='*.dat' \
+            -e 'ssh -i /root/.ssh/id_ed25519_backup_copy -o UserKnownHostsFile=/root/.ssh/known_hosts_backup_copy -o BatchMode=yes' \
+            "$src/" root@{{ pve_copy_ip }}:./
+          echo "copied $(ls "$src"/*.vma.zst | wc -l) backups to {{ pve_copy_host }}"
+
+    - name: Copy service and timer
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/pve-backup-copy.{{ item.ext }}"
+        mode: "0644"
+        content: "{{ item.content }}"
+      loop:
+        - ext: service
+          content: |
+            # Managed by Ansible (proxmox-lab)
+            [Unit]
+            Description=Copy backups to {{ pve_copy_host }}
+            After=network-online.target
+            Wants=network-online.target
+            [Service]
+            Type=oneshot
+            ExecStart=/usr/local/sbin/pve-backup-copy
+        - ext: timer
+          content: |
+            # Managed by Ansible (proxmox-lab)
+            [Unit]
+            Description=Copy backups to {{ pve_copy_host }} after the nightly job
+            [Timer]
+            OnCalendar=*-*-* {{ pve_backup_copy_time }}
+            Persistent=true
+            [Install]
+            WantedBy=timers.target
+      loop_control:
+        label: "pve-backup-copy.{{ item.ext }}"
+
+    - name: Copy timer enabled
+      ansible.builtin.systemd:
+        name: pve-backup-copy.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+      ignore_errors: "{{ ansible_check_mode }}"  # units don't exist yet in a dry run
+
+    - name: Is the copy storage defined on {{ pve_copy_host }}?
+      ansible.builtin.command: "pvesm status --storage {{ pve_copy_id }}"
+      register: pve_copy_storage
+      check_mode: false
+      changed_when: false
+      failed_when: false
+      delegate_to: "{{ pve_copy_host }}"
+
+    # keep-all: the mirror decides what exists; the target must never prune these itself
+    - name: Copy storage on {{ pve_copy_host }} (restore from its web UI)
+      ansible.builtin.command: >
+        pvesm add dir {{ pve_copy_id }} --path {{ pve_copy_path }} --content backup
+        --is_mountpoint /mnt/pve/data --nodes {{ hostvars[pve_copy_host].pve_node }}
+        --prune-backups keep-all=1
+      when: pve_copy_storage.rc != 0
+      changed_when: true
+      delegate_to: "{{ pve_copy_host }}"
+
 # S7: VM start order ------------------------------------------------------------------
 - name: Current start order
   ansible.builtin.command: "qm config {{ item.key }}"

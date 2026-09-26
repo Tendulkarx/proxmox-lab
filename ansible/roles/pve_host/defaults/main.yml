@@ -8,7 +8,14 @@ pve_backup_storage: data
 # Only 2 copies: these are full backups on the SAME disk as the VMs (prx1 has ~225 GB free).
 # Raise once backups move to Proxmox Backup Server (deduplicated) on the other host.
 pve_backup_retention: "keep-last=2"
-pve_backup_exclude: "{{ range(900, 920) | list | join(',') }}"
+# Lab VMs 900-919, and template 9000: scripts/prep-host.sh rebuilds it, so copies only use space.
+pve_backup_exclude: "{{ (range(900, 920) | list + [9000]) | join(',') }}"
+
+# Off-host copy (B1): a host with pve_backup_copy_to set (inventory/proxmox.yml) mirrors its
+# backup folder to that host each morning, after the nightly job. The target sees the copies
+# as storage <host>-copy, so they can be restored from its web UI. It runs only when the last
+# nightly run succeeded, so the copy always holds the last two good backups per VM.
+pve_backup_copy_time: "06:00"
 
 # Tag colours (Datacenter > Options > Tag Style)
 pve_tag_style: "color-map=prod:c62828:ffffff;lab:2e7d32:ffffff;terraform:5c6bc0:ffffff;docker:1e88e5:ffffff;windows:0078d4:ffffff;linux:f57c00:000000;template:757575:ffffff,shape=circle,ordering=config"

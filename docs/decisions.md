@@ -65,6 +65,8 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 49 | prdsrv1's disk uses `discard = on` and `ssd = true` (was `ignore`/`false`) | Without discard, space Windows frees never reached prx1: the image grew to 121 of 128 GB with 41 GB in use, backups were 130 GB, and on 2026-09-24 the nightly backup of prdsrv1 failed for lack of room on `data` |
 | 50 | prdsrv1's server settings live in `scripts/windows/prdsrv1-settings.ps1`, run over SSH: NTP time sync, Remote Desktop limited to the home networks, Fast Startup off, OneDrive removed, Edge start-up off | Windows isn't managed by Ansible; a re-runnable script keeps the repo the record. Its personal setup (apps, terminal, look) comes from the dotfiles repo instead |
 | 51 | prdsrv1's Remote Desktop uses H.264/AVC 4:4:4 at 60 fps with hardware encoding preferred (policy settings in `prdsrv1-settings.ps1`) | O'Neil uses prdsrv1 over Remote Desktop and wants it to look and feel like a real PC: 4:4:4 keeps full colour detail, 60 fps is smoother than the default 30, and a working GPU takes the encoding off the CPU |
+| 52 | prx1's backups are mirrored to prx2 each morning at 06:00 (`pve-backup-copy` timer, `pve_host` role), shown on prx2 as storage `prx1-copy` | prx1's backups shared the NVMe with the VMs they protect. The copy runs only when the last nightly run logged no errors, so prx2 always holds the last two good backups per VM (O'Neil: keep two, only after a successful backup). The key can only run rrsync into that folder; the script refuses a missing or empty source so a mirror can't wipe the copies |
+| 53 | Template 9000 is excluded from the nightly backup | `scripts/prep-host.sh` rebuilds it; copies only used space |
 
 ## Open items
 
