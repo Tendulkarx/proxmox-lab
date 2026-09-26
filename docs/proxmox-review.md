@@ -127,3 +127,45 @@ Noise, not problems: Arcane `context canceled` (page navigation), Metabase `rese
 | Backup of prdsrv1 failed 2026-09-24 | `data` was 92% full; prdsrv1's 130 GB archive didn't fit | **Fixed 2026-09-24**: prdsrv2 trimmed (97 to 40 GB); prdsrv1 disk given discard + ssd and restarted, free space zeroed with SDelete (Windows' manual "Retrim" reports skipped, but deletes are passed on, which is what shrank it): image 121 to 36 GB. `data` 60% used, 182 GB free. Fresh prdsrv1 backup 34.9 GB (was 130). Still to do: alerts (S2) |
 | prdsrv1 iGPU | Used for picture quality and speed over Remote Desktop. Full passthrough gives Code 43 (no ROM). Plan: GVT-g, which shares the HD 630 with the VM and is the supported route for this generation (prx1's kernel has `kvmgt` and `i915.enable_gvt`) | One maintenance window, prx1 reboot (prdsrv2 and prdsrv1 down about 5 minutes; also applies prdsrv1's pending disk change): prx1 GRUB `i915.enable_gvt=1` instead of `i915.enable_guc=3 i915.max_vfs=7`, module `kvmgt`; prdsrv1 `hostpci0: 0000:00:02.0,mdev=i915-GVTg_V5_4`. Rollback: restore both and reboot. The Intel Windows driver may need an older version if Code 43 stays |
 | prdsrv1 IP | Moving from 10.69.20.69 (DHCP) to a fixed 10.69.20.113, next to prdsrv2. First try 2026-09-24 failed safely (Windows "Generic failure"; the script reverted to DHCP in 5 s). The Mac's VPN (utun10) only routes known addresses: .113 was unreachable from it | Add 10.69.20.113 (or all of 10.69.20.0/24) to the VPN's allowed resources, then run `scripts/windows/prdsrv1-network.ps1` (now uses netsh). Then update the SSH config, README and the prod IP validation |
+
+## Re-audit (2026-09-26, 23:32): both hosts, prdsrv2, tstsrv1
+
+Source: `make audit`. prdsrv3 is retired and test1 is now tstsrv1, so `audit/vm-prdsrv3.txt` and
+`audit/vm-test1.txt` are old reports. prdsrv1 (Windows) is not covered by the VM audit.
+
+### Fixed since the last review
+
+| Item | Evidence now |
+|---|---|
+| M1 Backups exist | Nightly job on both hosts; prdsrv1, prdsrv2 and the template backed up 25 and 26 Sep |
+| M2 prx2 memory | prdsrv3 retired: `Mem: 7.6Gi ... 6.2Gi available` |
+| V1, V7 prdsrv3 | Retired (decision 35) |
+| V4 prdsrv2 updates | Auto-updates on (`unattended-upgrades active`); 39 pending, 1 security (was 152 / 117) |
+| Audit tooling | `make audit` refused tstsrv1 after its rebuild: lab VMs were checked against `~/.ssh/known_hosts`. New key verified through the guest agent (`SHA256:uW9C...dtA`), stale entry removed, `audit-vms` now reads `known_hosts.proxmox-lab` first |
+
+### Still open
+
+| # | Evidence | Fix |
+|---|---|---|
+| V2 | prdsrv2 `paperless-broker: 14413 error lines in 24h`: `Failed opening the temp RDB file ... Permission denied` | Redis can't write `/data`, so it may refuse writes and stall Paperless. Fix the ownership of the broker's data folder (Redis runs as UID 999), restart the broker |
+| V3 | prdsrv2 `fail2ban: failed`, `section 'sshd' already exists` (jail.local line 278) | Remove the duplicate `[sshd]` block; manage `jail.local` from Ansible |
+| S2 | `notifications.cfg: none` on both hosts | ntfy target from `pve_host` (needs a topic URL). Nothing tells you a backup or disk failed |
+| Old root login | prx1 journal: `authentication failure; rhost=::ffff:10.69.20.114 user=root@pam` 07:53 and 08:08 | Homepage on prdsrv2 has `config/proxmox.yaml`, the likely source. Give it a `PVEAuditor` API token on each host |
+| S1 | `root@pam enabled=1 tfa=False` on both | TOTP on root@pam; password stays in 1Password as break-glass |
+| V5 | prdsrv2 `no daemon.json (container logs never rotate)` | Same `daemon.json` as tstsrv1 (10 MB x 3); needs a Docker restart |
+| V6 | prdsrv2 `/opt/docker`: `not a git repository`; no database dumps | `git init` the stack folder; nightly dumps for Postgres, SQL Server, Oracle |
+| V8 | prdsrv2 `tcp 0.0.0.0:5432` (Postgres); 1433 and 1521 already bound to 10.69.20.114 | Bind Postgres to 10.69.20.114 like the others |
+| V9 | prdsrv2 11 of 14 images on `:latest` | Pin versions |
+| S8 | prx1 boot SSD `Power_On_Hours 73403` (8.4 years), wear 99% left | Plan a replacement |
+| prdsrv1 iGPU (GVT-g) | prx1 cmdline still `i915.enable_guc=3 i915.max_vfs=7` | As planned above |
+| N5 | `pve-firewall: disabled/running` | Deliberate while UniFi firewalls |
+
+### New
+
+| # | Evidence | Why it matters | Fix |
+|---|---|---|---|
+| B1 | prx1 backups go to `data` on prx1 (`nvme0n1p1 /mnt/pve/data`), the same disk as prdsrv1 and prdsrv2 | One NVMe failure loses the VMs and every backup of them. Step 2 of the backup design (other host's disk) was never done | Copy prx1's backups to prx2's `data` (`867G` free, prx2 is idle) nightly; later PBS as designed. Then retention can go beyond `keep-last=2` |
+| B2 | prdsrv1 `guest agent: NOT responding`; journal `VM 100 qga command failed ... got timeout` | No clean shutdown from Proxmox and no VSS freeze, so its nightly backups are crash-consistent only | Check the `QEMU-GA` service and virtio-win guest tools inside prdsrv1 |
+| B3 | prdsrv2 `REBOOT REQUIRED linux-image-6.8.0-142-generic`; both hosts `pending upgrades: 4` | Kernel fixes aren't live until a restart | `make patch ENV=prod NAME=prdsrv2` in a window of O'Neil's choosing (DNS, Caddy and all apps down about 2 minutes); host upgrades via `pve_host` |
+| B4 | Template 9000 backed up nightly on both hosts (`vzdump-qemu-9000-...` 0.7 GB each) | Rebuilt by `make`, so the copies only use space | Decide: add 9000 to the job's exclude list |
+| B5 | prx2 holds `vzdump-qemu-100-2026_09_22-23_11_48` (18 GB): prdsrv3's final backup | Nothing prunes it | Decide: keep until a set date, then delete |

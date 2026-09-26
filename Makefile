@@ -112,7 +112,7 @@ audit-hosts:
 	@ls -l audit/
 
 audit-vms:
-	cd ansible && ANSIBLE_SSH_ARGS="-o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=accept-new" ansible-playbook -i inventory/prod.yml -i inventory/lab.generated.yml playbooks/audit.yml
+	cd ansible && ANSIBLE_SSH_ARGS="-o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile='$(LAB_KNOWN_HOSTS) ~/.ssh/known_hosts'" ansible-playbook -i inventory/prod.yml -i inventory/lab.generated.yml playbooks/audit.yml
 
 .PHONY: backup-vm patch
 backup-vm:
