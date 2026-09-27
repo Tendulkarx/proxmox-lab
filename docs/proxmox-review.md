@@ -199,3 +199,5 @@ Source: `make audit`. prdsrv3 is retired and test1 is now tstsrv1, so `audit/vm-
 - **V2 came back after the reboot:** Redis's folder `data/redis` sits inside Paperless's data
   folder, which Paperless gives to UID 1000 at every start, so the chown to 999 did not last.
   Fix: `user: "1000:1000"` on the `broker` service.
+  Applied 09:03: broker recreated, `rdb_last_bgsave_status:ok`, Paperless reconnected in 2 s.
+  Compose file backed up as `docker-compose.yml.bak-20260927`.
