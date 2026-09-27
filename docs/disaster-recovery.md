@@ -13,8 +13,8 @@ cannot be recovered today and the order to close it.**
 | SSH key `id_ed25519_homelab` | Mac, and 1Password (SSH Key item `id_ed25519_homelab`, vault Development, since 2026-09-24) | Yes |
 | Terraform state | Mac only, git-ignored | No, but rebuildable by re-import |
 | Dotfiles | `~/development/dotfiles` | Yes, if pushed: github.com/Tendulkarx/dotfiles (private) |
-| App stacks (`/opt/docker/*` on prdsrv2) | prdsrv2 only, not in git | **No** (gap G2) |
-| VM backups (nightly 02:30, keep 2) | `data` disk of the **same** host | **No** if that disk dies (gap G3) |
+| App stacks (`/opt/docker/*` on prdsrv2) | github.com/Tendulkarx/homelab-apps (private; `/opt/docker` is the working copy, the Mac has a clone). `.env` values in 1Password as `prdsrv2-<app>` | Yes (app data: only in the VM backups) |
+| VM backups (nightly 02:30, keep 2) | `data` disk of the same host, and prx1's copied to prx2 (`prx1-copy`) at 06:00 | Survives one host's disk; nothing off-site yet (gap G3) |
 | Network (UniFi), DNS (Cloudflare) | their cloud consoles | Yes |
 | Build notes | `agentic-os/07-home-tech` | Yes, if pushed (same repo) |
 
@@ -150,9 +150,10 @@ Two routes; today only route 1 is possible for prdsrv2 and prdsrv1.
 1. **Restore from backup** (needs a surviving backup: gap G3): copy the backup files to the
    host's `/mnt/pve/data/dump/`, `qmrestore` each one with its original VMID, start them.
    Then `make plan ENV=prod`: `imports.tf` adopts them, expect 0 changes.
-2. **Rebuild from code** (once gaps G2 and G4 are closed): Terraform creates prdsrv2 fresh
+2. **Rebuild from code** (once gap G4 is closed): Terraform creates prdsrv2 fresh
    from the template, `make configure ENV=prod` installs baseline, shell and Docker, the
-   `stacks` role deploys every app, and the latest database dumps are loaded back in.
+   `git clone` homelab-apps to `/opt/docker`, `op inject` each `.env`, `docker compose up -d`
+   per app, and the latest database dumps are loaded back in.
 
 Then `make hosts ARGS="--tags startup,backups"`, and check DNS (Pi-hole) and Caddy
 before anything else, because every other service depends on them.
@@ -172,16 +173,17 @@ Done when every host and VM report is clean, `make plan` and `make plan ENV=prod
 | # | Gap | Risk | Fix | Effort |
 |---|---|---|---|---|
 | ~~G1~~ | ~~Repo exists only on the Mac~~ | **Closed 2026-09-25**: pushed to github.com/Tendulkarx/proxmox-lab (private) | Push after every commit | |
-| G3 | Backups live on the same disk as the VMs; nothing offsite | One disk failure loses VMs and backups together | Proxmox Backup Server on prx2 (1 TB); prx1 backs up to it. Then sync to Google Drive or a cloud bucket | an evening |
-| G2 | prdsrv2's app stacks are hand-managed and not in git | Rebuilding prdsrv2 without a backup means recreating every stack by hand | `stacks/` folder plus an Ansible `stacks` role; secrets via 1Password; pin image versions | a weekend |
+| G3 | Nothing off-site. (Same-disk part closed 2026-09-27: prx1's backups are mirrored to prx2 after each clean run) | Losing both hosts (fire, theft, surge) loses everything | Encrypted rclone upload: database dumps to Google Drive (free); VM backups to a service with room for about 52 GB | an evening |
+| ~~G2~~ | ~~prdsrv2's app stacks are not in git~~ | **Closed 2026-09-27**: `/opt/docker` is the repo homelab-apps, images pinned, secrets in 1Password (`op inject -i .env.example -o .env`) | Deploying it with Ansible was dropped: Arcane edits the files in place (decision 54) | |
 | G4 | No database dumps | Can only restore a whole VM, not one database; crash-consistent at best | Nightly `pg_dump`, SQL Server `BACKUP DATABASE`, Oracle `expdp` into a backup folder picked up by the VM backup | an evening |
 | G5 | Some host config is manual (data storage, fstab, iGPU kernel flags, network) | Rebuild relies on this document being right | Move storage and kernel cmdline into the `pve_host` role | an evening |
 | G6 | `agentic-os` has a GitHub remote, but its last commit was 8 days ago | Recent dotfile and note changes exist only on the Mac | Commit and push it regularly | 5 min |
 | G7 | prdsrv1 (Windows) exists only as a VM and its backup | No rebuild path | Accept (backup only), or document its setup | optional |
 | G8 | Restores have never been tested | You find out at the worst moment | Quarterly drill: restore prdsrv2's backup to VMID 919 with the NIC disconnected, boot it, check the apps' data, delete it | 30 min each quarter |
 
-Until G3 is closed, the realistic worst case is: **a failed NVMe on prx1 loses
-prdsrv2 and every service on it, with no way back.** Those two are the priority.
+Since 2026-09-27 a failed NVMe on prx1 is survivable (restore from `prx1-copy` on prx2, though
+prx2 has only 7.6 GB RAM, so restore prdsrv2 with less memory). The worst case now is losing
+both hosts at once: G3 (off-site) and G4 (dumps) are the priority.
 
 ## Drills
 
