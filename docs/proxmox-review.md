@@ -181,3 +181,21 @@ Source: `make audit`. prdsrv3 is retired and test1 is now tstsrv1, so `audit/vm-
 - **V2 cause found:** Redis runs as UID 999, its folder `/opt/docker/paperless/data/redis` is
   owned by 1000. `stop-writes-on-bgsave-error` is `no`, so Paperless isn't stalled, but nothing
   has been saved since 3 Sep. Fix: `sudo chown -R 999:999` on that folder, then `redis-cli BGSAVE`.
+- **V3 fixed:** the custom `[sshd]` block moved from `jail.local` (a full copy of `jail.conf`,
+  which has its own `[sshd]`) to `jail.d/sshd.local`, with `ignoreip` for 10.69.10.0/24 and
+  10.69.2.0/24. `fail2ban-client -t` OK; active again after the reboot.
+- **V8 fixed:** Postgres published on `10.69.20.114:5432` only (was `0.0.0.0`); apps reach it by
+  name on the `proxy` network. Old compose file kept as `docker-compose.yml.bak-20260927`.
+- **B3, V4, V5 done:** O'Neil ran `make patch ENV=prod NAME=prdsrv2` (02:57): kernel
+  6.8.0-142, 0 updates pending, `daemon.json` with log rotation (applies to containers as they
+  are recreated), 14 of 14 containers up, Pi-hole answering.
+- **Hosts patched:** ghostscript security update on both; 0 pending.
+- **B2 withdrawn:** prdsrv1's agent is fine (3 pings at 0.7 s; backups log `fs-freeze`/`fs-thaw`).
+  The audit's ping was a one-off timeout.
+- **Root login failures withdrawn:** only Caddy on prdsrv2 talks to Proxmox (it proxies
+  `prx1.`/`prx2.` for the web UI). The pattern (ticket renewal every 15 min, constant polling,
+  401s the morning after an overnight gap) is an open browser tab whose login expired, not an
+  app with root's password. Homepage's `proxmox.yaml` is all comments.
+- **V2 came back after the reboot:** Redis's folder `data/redis` sits inside Paperless's data
+  folder, which Paperless gives to UID 1000 at every start, so the chown to 999 did not last.
+  Fix: `user: "1000:1000"` on the `broker` service.
