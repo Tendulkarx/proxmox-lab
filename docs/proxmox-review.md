@@ -201,3 +201,8 @@ Source: `make audit`. prdsrv3 is retired and test1 is now tstsrv1, so `audit/vm-
   Fix: `user: "1000:1000"` on the `broker` service.
   Applied 09:03: broker recreated, `rdb_last_bgsave_status:ok`, Paperless reconnected in 2 s.
   Compose file backed up as `docker-compose.yml.bak-20260927`.
+- **V6 (part):** `/opt/docker` under git (github.com/Tendulkarx/homelab-apps). Database dumps:
+  later, with the off-site copy (2 days kept; Google Drive free for dumps, VM backups to be decided).
+- **V9:** pins verified against the running images; committed after the history rewrite that
+  removes the email from the first commit.
+- Housekeeping: old template 9000 backups still on both hosts (deletion was blocked; O'Neil to run).
