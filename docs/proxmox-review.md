@@ -206,3 +206,14 @@ Source: `make audit`. prdsrv3 is retired and test1 is now tstsrv1, so `audit/vm-
 - **V9:** pins verified against the running images; committed after the history rewrite that
   removes the email from the first commit.
 - Housekeeping: old template 9000 backups still on both hosts (deletion was blocked; O'Neil to run).
+
+## Logging (2026-09-28)
+
+Dozzle (`logs.`) shows every container on prdsrv2; property-search keeps a log file per run in
+`/opt/docker/property-search/logs` (decisions 58 and 59). Still outside it:
+
+| # | Gap | Proposal |
+|---|---|---|
+| L1 | The hosts' journald, prdsrv1's Windows Event Log, and anything older than Docker's 30 MB per container: no one place to search, no history, no alerts | Phase 2: Grafana Loki and Grafana as a prdsrv2 stack, Grafana Alloy on each host and VM (via `pve_host`, `vm_baseline`, and the Windows installer for prdsrv1). Keep 30 days; alert on errors from backups and property-search. Dozzle stays for live tailing |
+| L2 | Future Docker VMs would not appear in Dozzle | Add a Dozzle agent (`amir20/dozzle agent`, port 7007) to the Ansible `docker` role, and list agents in `DOZZLE_REMOTE_AGENT` on prdsrv2 |
+
