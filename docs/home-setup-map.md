@@ -12,6 +12,9 @@ Where everything lives and how each machine is set up. Updated 2026-09-25.
 | `~/development/obsidian/ob` | Your knowledge vault: guides, decisions, to-dos | You and Claude |
 | 1Password, vault `Development` | Every secret: Proxmox API tokens, root passwords, `proxmox-vm-console`, SSH key `id_ed25519_homelab` | 1Password app |
 
+Planned changes: `docs/lab-rebuild-plan.md` (agreed 2026-09-29: Linux prdsrv1 as the main app
+host, prdsrv2 as the database server, Proxmox Backup Server and an infra container on prx2).
+
 The repos are the detailed record; the vault holds summaries and "how do I" guides that link
 here. Retired and not to be used: chezmoi, github.com/Tendulkarx/machine-setup (archived), and
 agentic-os `Software-Development-Resources/_archive/`.
