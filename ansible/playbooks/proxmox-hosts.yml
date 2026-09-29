@@ -6,3 +6,6 @@
   hosts: proxmox
   roles:
     - pve_host
+    # Proxmox Backup Server on hosts with pbs_enabled (prx2; decision 61)
+    - role: pbs
+      when: pbs_enabled | default(false)

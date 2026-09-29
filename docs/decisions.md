@@ -78,6 +78,7 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 62 | Infra (Uptime Kuma, second Pi-hole) in an **LXC**, prdsrv3 (VMID 102, .115) on prx2 | Costs only what the apps use (about 1 GB), unlike a VM; Uptime Kuma can then report prdsrv2 or prx1 down, and DNS survives prdsrv2 restarts |
 | 63 | The last Windows backup is kept in storage `archive` on prx2 (hard link, protected at source), outside every prune and mirror | The nightly mirror deletes what prx1 prunes, and keep-last=2 would otherwise drop it within two nights of the Linux prdsrv1 starting |
 | 64 | Off-site in two tiers: tier 1, the irreplaceable data (dumps, Paperless, n8n, Uptime Kuma; under 1 GB) encrypted to Google Drive's free 15 GB; tier 2, whole VM backups to paid storage, decided last | Free Drive space fits what cannot be rebuilt; VM backups (30 to 40 GB) are convenience, rebuildable from the repos |
+| 65 | PBS runs **alongside** the vzdump job for two weeks (`pbs-nightly` 03:30), then vzdump and its copy go | A first restore from PBS worked, but two weeks of nightly verified snapshots are the proof before the only other copy is deleted |
 
 ## Open items
 

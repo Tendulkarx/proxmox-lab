@@ -130,6 +130,34 @@
   changed_when: true
   tags: [backups]
 
+# Phase 2 D: nightly backups to Proxmox Backup Server (deduplicated). Retention is the server's
+# prune job, so keep-all here. Runs alongside the vzdump job above until that one is retired.
+- name: Does the PBS backup job exist?
+  when: pve_backup_pbs_storage is defined
+  ansible.builtin.command: pvesh get /cluster/backup/pbs-nightly
+  register: pve_pbs_job
+  check_mode: false  # read-only probe; must run in --check too
+  changed_when: false
+  failed_when: false
+  tags: [backups]
+
+- name: Nightly backup job to {{ pve_backup_pbs_storage | default('PBS') }}
+  when: pve_backup_pbs_storage is defined
+  ansible.builtin.command: >
+    pvesh {{ 'set' if pve_pbs_job.rc == 0 else 'create' }} /cluster/backup{{ '/pbs-nightly' if pve_pbs_job.rc == 0 else '' }}
+    {{ '' if pve_pbs_job.rc == 0 else '--id pbs-nightly' }}
+    --schedule '{{ pve_backup_pbs_schedule }}'
+    --storage {{ pve_backup_pbs_storage }}
+    --node {{ pve_node }}
+    --all 1
+    --exclude '{{ pve_backup_exclude }}'
+    --mode snapshot
+    --prune-backups 'keep-all=1'
+    --notes-template '{{ pve_backup_notes }}'
+    --enabled 1
+  changed_when: true
+  tags: [backups]
+
 # B1: copy backups to the other host ------------------------------------------------------
 # The key may only run rrsync into one folder on the target, so it can't do anything else there.
 - name: Backup copy to {{ pve_backup_copy_to | default('another host') }}

@@ -1,0 +1,139 @@
+---
+# Proxmox Backup Server installed on this Proxmox VE host. Safe to re-run; nothing here touches
+# running VMs. Web UI: https://<host>:8007
+
+- name: Proxmox Backup Server repository (no-subscription)
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/pbs.sources
+    mode: "0644"
+    content: |
+      # Managed by Ansible (proxmox-lab)
+      Types: deb
+      URIs: http://download.proxmox.com/debian/pbs
+      Suites: trixie
+      Components: pbs-no-subscription
+      Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+  tags: [pbs]
+
+- name: Is the package's enterprise repository file there yet?
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list.d/pbs-enterprise.sources
+  register: pbs_enterprise_file
+  tags: [pbs]
+
+- name: Proxmox Backup Server installed
+  ansible.builtin.apt:
+    name: proxmox-backup-server
+    state: present
+    update_cache: "{{ not pbs_enterprise_file.stat.exists }}"  # first install only
+  ignore_errors: "{{ ansible_check_mode }}"  # in a dry run the repository is only "would be" added
+  tags: [pbs]
+
+# The package adds the paid enterprise repository, which refuses access without a subscription
+# and breaks every apt update on the host. Switch it off, as pve-enterprise already is.
+- name: Enterprise repository off
+  ansible.builtin.lineinfile:
+    path: /etc/apt/sources.list.d/pbs-enterprise.sources
+    regexp: '^Enabled:'
+    line: "Enabled: false"
+  when: not ansible_check_mode
+  tags: [pbs]
+
+- name: Datastore folder
+  ansible.builtin.file:
+    path: "{{ pbs_datastore_path }}"
+    state: directory
+    owner: backup
+    group: backup
+    mode: "0750"
+  ignore_errors: "{{ ansible_check_mode }}"  # the backup user arrives with the package
+  tags: [pbs]
+
+- name: Current datastores, prune and verify jobs, users and permissions
+  ansible.builtin.shell: |
+    set -o pipefail
+    command -v proxmox-backup-manager >/dev/null || { echo '{}'; exit 0; }
+    printf '{"stores": %s, "prune": %s, "verify": %s, "users": %s, "acl": %s}' \
+      "$(proxmox-backup-manager datastore list --output-format json)" \
+      "$(proxmox-backup-manager prune-job list --output-format json)" \
+      "$(proxmox-backup-manager verify-job list --output-format json)" \
+      "$(proxmox-backup-manager user list --output-format json)" \
+      "$(proxmox-backup-manager acl list --output-format json)"
+  args:
+    executable: /bin/bash
+  register: pbs_state_raw
+  check_mode: false
+  changed_when: false
+  tags: [pbs]
+
+- name: Parse
+  ansible.builtin.set_fact:
+    pbs_state: "{{ pbs_state_raw.stdout | from_json }}"
+  tags: [pbs]
+
+- name: Datastore {{ pbs_datastore }}
+  ansible.builtin.command: >
+    proxmox-backup-manager datastore create {{ pbs_datastore }} {{ pbs_datastore_path }}
+    --gc-schedule '{{ pbs_gc_schedule }}'
+    --comment 'Nightly backups of prx1 VMs (proxmox-lab)'
+  when: pbs_datastore not in (pbs_state.stores | default([]) | map(attribute='name'))
+  changed_when: true
+  tags: [pbs]
+
+- name: Garbage collection schedule
+  ansible.builtin.command: >
+    proxmox-backup-manager datastore update {{ pbs_datastore }} --gc-schedule '{{ pbs_gc_schedule }}'
+  changed_when: false
+  when: not ansible_check_mode
+  tags: [pbs]
+
+- name: Prune job (keep {{ pbs_keep_daily }} daily, {{ pbs_keep_weekly }} weekly, {{ pbs_keep_monthly }} monthly)
+  ansible.builtin.command: >
+    proxmox-backup-manager prune-job create nightly --store {{ pbs_datastore }}
+    --schedule '{{ pbs_prune_schedule }}'
+    --keep-daily {{ pbs_keep_daily }} --keep-weekly {{ pbs_keep_weekly }} --keep-monthly {{ pbs_keep_monthly }}
+  when: "'nightly' not in (pbs_state.prune | default([]) | map(attribute='id'))"
+  changed_when: true
+  tags: [pbs]
+
+- name: Prune job settings kept as in the defaults
+  ansible.builtin.command: >
+    proxmox-backup-manager prune-job update nightly --schedule '{{ pbs_prune_schedule }}'
+    --keep-daily {{ pbs_keep_daily }} --keep-weekly {{ pbs_keep_weekly }} --keep-monthly {{ pbs_keep_monthly }}
+  when:
+    - "'nightly' in (pbs_state.prune | default([]) | map(attribute='id'))"
+    - not ansible_check_mode
+  changed_when: false
+  tags: [pbs]
+
+- name: Verify job (reads every backup back once a week)
+  ansible.builtin.command: >
+    proxmox-backup-manager verify-job create weekly --store {{ pbs_datastore }}
+    --schedule '{{ pbs_verify_schedule }}' --ignore-verified true --outdated-after 30
+  when: "'weekly' not in (pbs_state.verify | default([]) | map(attribute='id'))"
+  changed_when: true
+  tags: [pbs]
+
+- name: Backup user {{ pbs_backup_user }}
+  ansible.builtin.command: >
+    proxmox-backup-manager user create {{ pbs_backup_user }}
+    --comment 'prx1 nightly backups (token made by scripts/pbs-connect.sh)'
+  when: pbs_backup_user not in (pbs_state.users | default([]) | map(attribute='userid'))
+  changed_when: true
+  tags: [pbs]
+
+# A token can only use what both it and its user are allowed (privilege separation): the user
+# gets DatastoreBackup on this datastore; the token gets the same in scripts/pbs-connect.sh.
+- name: User {{ pbs_backup_user }} may back up to {{ pbs_datastore }} only
+  ansible.builtin.command: >
+    proxmox-backup-manager acl update /datastore/{{ pbs_datastore }} DatastoreBackup
+    --auth-id {{ pbs_backup_user }}
+  when: >-
+    (pbs_state.acl | default([]) | selectattr('ugid', 'equalto', pbs_backup_user)
+    | selectattr('path', 'equalto', '/datastore/' ~ pbs_datastore) | list | length) == 0
+  changed_when: true
+  tags: [pbs]
+
+# The token for prx1, its permission (DatastoreBackup on this datastore only) and prx1's `pbs`
+# storage are made by scripts/pbs-connect.sh: the token secret is shown once and goes straight
+# to prx1, never through Ansible or the repo.

@@ -1,0 +1,24 @@
+---
+# Proxmox Backup Server on a Proxmox VE host (decision 61; docs/lab-rebuild-plan.md phase 2).
+# Applied to hosts with pbs_enabled: true (inventory/proxmox.yml).
+
+# One datastore on the host's big `data` disk.
+pbs_datastore: main
+pbs_datastore_path: /mnt/pve/data/pbs
+
+# Retention: what a nightly backup of every VM keeps. Deduplication makes the extra history
+# cost little more than the chunks that actually change.
+pbs_keep_daily: 7
+pbs_keep_weekly: 4
+pbs_keep_monthly: 3
+
+# After the 02:30 nightly job: prune, then free the space (garbage collection), and once a
+# week read every backup back to prove it is intact.
+pbs_prune_schedule: "05:00"
+pbs_gc_schedule: "05:30"
+pbs_verify_schedule: "sun 07:00"
+
+# The account prx1 backs up as. Its API token (the secret) is made by scripts/pbs-connect.sh,
+# not here, so the secret never passes through Ansible.
+pbs_backup_user: backup@pbs
+pbs_backup_token: prx1

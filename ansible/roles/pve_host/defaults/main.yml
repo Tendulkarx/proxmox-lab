@@ -8,6 +8,9 @@ pve_backup_storage: data
 # Only 2 copies: these are full backups on the SAME disk as the VMs (prx1 has ~225 GB free).
 # Raise once backups move to Proxmox Backup Server (deduplicated) on the other host.
 pve_backup_retention: "keep-last=2"
+# Second nightly job to Proxmox Backup Server, on hosts with pve_backup_pbs_storage set
+# (inventory). An hour after the vzdump job, which takes minutes.
+pve_backup_pbs_schedule: "03:30"
 # Lab VMs 900-919, and template 9000: scripts/prep-host.sh rebuilds it, so copies only use space.
 pve_backup_exclude: "{{ (range(900, 920) | list + [9000]) | join(',') }}"
 

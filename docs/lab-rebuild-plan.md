@@ -89,6 +89,22 @@ Undo: remove the link and the storage.
 Check: the nightly job logs to `pbs`; a restore boots; alerts arrive for a test message.
 Undo: point the job back at `data`; `apt remove proxmox-backup-server`.
 
+Status 2026-09-29: steps 1 to 4 done; step 5 (alerts) open.
+- 1: role `pbs` (`make hosts`), idempotent. The enterprise repository is kept but
+  `Enabled: false`, because it fails `apt update` with 401 without a subscription.
+- 2: `scripts/pbs-connect.sh` made token `backup@pbs!prx1` and storage `pbs` on prx1. The secret
+  went straight from prx2 to prx1 and is not in 1Password: if it is lost, run the script with
+  `--rotate`. Token rights are what the user AND the token are both granted, so the role gives
+  `backup@pbs` DatastoreBackup on `/datastore/main` and the script gives the token the same.
+- 3: prdsrv2 backed up in 4 min and restored to VM 919 (NIC unplugged, 10.69.20.114 on a dummy
+  interface) in 5 min. Postgres (5 databases; property_search had 7,241 listings and the
+  19:00 run), SQL Server (6 databases) and the app containers came up. Oracle stopped with
+  ORA-00600 [ksipc: no private ips avail for use]: it needs a real network interface, which the
+  unplugged test VM does not have, so it says nothing about the backup. VM 919 destroyed.
+- 4: done as a second job, `pbs-nightly` at 03:30 (all VMs, same exclusions, retention on the
+  Backup Server), not a switch. `nightly` to `data` and the 06:00 copy stay until 2026-10-13;
+  then remove them and the prx1 mirror on prx2.
+
 ### Phase 3: prdsrv3 infra container on prx2
 
 1. Terraform: an LXC resource (bpg `proxmox_virtual_environment_container`) in

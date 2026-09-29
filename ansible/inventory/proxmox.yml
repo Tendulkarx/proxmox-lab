@@ -8,11 +8,15 @@ all:
           pve_node: prx-server-1
           # prx1's backups share a disk with its VMs: copy them to prx2's 1 TB disk
           pve_backup_copy_to: prx2
+          # Also back up nightly to the Backup Server on prx2 (storage made by scripts/pbs-connect.sh)
+          pve_backup_pbs_storage: pbs
         prx2:
           ansible_host: 10.69.20.131
           pve_node: prx-server-2
           # Storage `archive`: backups kept outside every job (the last Windows prdsrv1, decision 63)
           pve_archive: true
+          # Proxmox Backup Server installed on this host (decision 61)
+          pbs_enabled: true
       vars:
         ansible_user: root
         ansible_ssh_private_key_file: ~/.ssh/id_ed25519_homelab
