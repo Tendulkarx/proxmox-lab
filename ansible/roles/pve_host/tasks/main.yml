@@ -264,6 +264,34 @@
       changed_when: true
       delegate_to: "{{ pve_copy_host }}"
 
+# Archive: backups kept outside every job (decision 63) ---------------------------------------
+# A plain folder on the big disk. No backup job writes here and keep-all stops Proxmox pruning
+# it, so what is put here (by hand, see docs/lab-rebuild-plan.md phase 1) stays until removed.
+- name: Archive storage
+  when: pve_archive | default(false)
+  tags: [archive]
+  block:
+    - name: Archive folder
+      ansible.builtin.file:
+        path: /mnt/pve/data/archive/dump
+        state: directory
+        mode: "0755"
+
+    - name: Is the archive storage defined?
+      ansible.builtin.command: pvesm status --storage archive
+      register: pve_archive_storage
+      check_mode: false
+      changed_when: false
+      failed_when: false
+
+    - name: Archive storage (restore from the web UI)
+      ansible.builtin.command: >
+        pvesm add dir archive --path /mnt/pve/data/archive --content backup
+        --is_mountpoint /mnt/pve/data --nodes {{ pve_node }}
+        --prune-backups keep-all=1
+      when: pve_archive_storage.rc != 0
+      changed_when: true
+
 # S7: VM start order ------------------------------------------------------------------
 - name: Current start order
   ansible.builtin.command: "qm config {{ item.key }}"

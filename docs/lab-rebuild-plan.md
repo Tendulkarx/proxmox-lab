@@ -56,6 +56,10 @@ Each phase lists what changes, who does it, how it is checked, and how to undo i
 
 ### Phase 1: archive the Windows backup (no service affected)
 
+**Done 2026-09-29**: storage `archive` on prx2 (`make hosts ARGS="--tags archive"`); the 29 Sep
+nightly backup of Windows prdsrv1 (39.4 GB) protected on prx1, hard-linked into `archive` and
+protected there; `zstd -t` passed. This is the interim copy; the final one comes in phase 5.
+
 1. Storage `archive` on prx2: `/mnt/pve/data/archive`, content backup, `keep-all`, in
    `ansible/roles/pve_host` so it is rebuilt with the host. No job writes to or prunes it.
 2. Protect the newest Windows backup on prx1 (Proxmox never prunes protected backups) and
