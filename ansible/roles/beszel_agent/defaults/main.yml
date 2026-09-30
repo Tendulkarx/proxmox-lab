@@ -1,0 +1,16 @@
+---
+# Beszel agent on the Proxmox hosts: sends CPU, memory, disks, network and temperatures to the
+# hub on prdsrv3 (homelab-apps beszel/). It connects out over WebSocket and listens on no port.
+# The VMs run the same agent as a container (homelab-apps beszel-agent/).
+
+# Pinned release and the checksum from its beszel_<version>_checksums.txt
+beszel_agent_version: "0.20.0"
+beszel_agent_sha256: f03b8ec7349a8133a0329ef50619bc3a97a7bb0a0e423866416ecc818cebc43c
+
+beszel_agent_hub_url: https://beszel.example.com
+# Registration token and the hub's public key (1Password "Homelab - Beszel", vault Development)
+beszel_agent_token_ref: "op://Development/qm4vzqlljxjkjqhgpnggqf3hue/agents/agent-token"
+beszel_agent_key_ref: "op://Development/qm4vzqlljxjkjqhgpnggqf3hue/agents/hub-key"
+
+# Disks beyond the root one: the `data` disk every host has
+beszel_agent_extra_filesystems: /mnt/pve/data__data

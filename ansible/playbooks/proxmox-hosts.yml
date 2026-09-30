@@ -9,3 +9,5 @@
     # Proxmox Backup Server on hosts with pbs_enabled (prx2; decision 61)
     - role: pbs
       when: pbs_enabled | default(false)
+    # Resource history and alerts in Beszel (hub on prdsrv3; decision 78)
+    - { role: beszel_agent, tags: [beszel] }
