@@ -226,7 +226,7 @@ remove from prdsrv2:
 Check after each: the app's page loads, Uptime Kuma green, property-search's next run is `ok`.
 Undo: start the app on prdsrv2 again (its data is left in place until phase 7).
 
-Status 2026-09-30: every app moved; Caddy runs on both hosts until DNS moves.
+Status 2026-09-30: phase 6 done.
 - Moved to prdsrv1: Homepage, Dozzle, Arcane, Metabase, n8n, Paperless (data copied with the app
   stopped; each checked through Caddy). Their data on prdsrv2 is left in place for phase 7.
 - Changed from the plan: property-search stays on prdsrv2 beside Postgres. n8n (now on prdsrv1)
@@ -241,9 +241,11 @@ Status 2026-09-30: every app moved; Caddy runs on both hosts until DNS moves.
   to `daily/<date>/<host>`.
 - Caddy: config folder mounted (`caddy/etc`), so `caddy reload` works after a pull. Pi-hole's
   page is published on 10.69.20.114:8081 for it.
-- To finish: O'Neil moves the Cloudflare `*` record to 10.69.20.113; then Caddy on prdsrv2
-  stops, the Caddyfile goes back to container names on prdsrv1 and the temporary
-  `PUBLISH_IP` ports close.
+- Finished the same day: O'Neil moved the Cloudflare `*` record to 10.69.20.113; once caches
+  expired (5 minutes; the Mac held some names a little longer) Caddy on prdsrv2 stopped, the
+  Caddyfile went back to container names and the `PUBLISH_IP` ports closed. All ten sites and
+  every Uptime Kuma monitor are up. Downtime: each app about a minute while it moved; Pi-hole's
+  page about 70 minutes (prdsrv2's UFW blocked its own Caddy from the new 8081 port).
 
 ### Phase 7: tidy prdsrv2 and add tstsrv1
 
