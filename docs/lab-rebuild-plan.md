@@ -226,6 +226,25 @@ remove from prdsrv2:
 Check after each: the app's page loads, Uptime Kuma green, property-search's next run is `ok`.
 Undo: start the app on prdsrv2 again (its data is left in place until phase 7).
 
+Status 2026-09-30: every app moved; Caddy runs on both hosts until DNS moves.
+- Moved to prdsrv1: Homepage, Dozzle, Arcane, Metabase, n8n, Paperless (data copied with the app
+  stopped; each checked through Caddy). Their data on prdsrv2 is left in place for phase 7.
+- Changed from the plan: property-search stays on prdsrv2 beside Postgres. n8n (now on prdsrv1)
+  still starts it over SSH to .114, so neither the forced-command key nor the n8n credential
+  changed. Apps on prdsrv1 reach Postgres as `postgres` through `extra_hosts`, so no secret
+  changed either.
+- Dozzle on prdsrv1 reads prdsrv2 and prdsrv3 through `dozzle-agent`, with the lab's own
+  certificate (the built-in one is shared by every install and would let anyone reaching port
+  7007 run commands in the containers).
+- Backups follow the apps: `dump.sh` does only the parts whose container runs on the host;
+  prdsrv1 has its own timers, rclone config and Uptime Kuma push monitors; off-site copies go
+  to `daily/<date>/<host>`.
+- Caddy: config folder mounted (`caddy/etc`), so `caddy reload` works after a pull. Pi-hole's
+  page is published on 10.69.20.114:8081 for it.
+- To finish: O'Neil moves the Cloudflare `*` record to 10.69.20.113; then Caddy on prdsrv2
+  stops, the Caddyfile goes back to container names on prdsrv1 and the temporary
+  `PUBLISH_IP` ports close.
+
 ### Phase 7: tidy prdsrv2 and add tstsrv1
 
 1. Remove the moved stacks and their data from prdsrv2 (a backup exists from phase 2).

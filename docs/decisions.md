@@ -83,6 +83,9 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 67 | Alerts by email through the Gmail app password (Proxmox, Backup Server, Uptime Kuma), warnings and errors only | O'Neil's choice; one login already in 1Password; a send-only provider can replace it later in one place |
 | 68 | Database dumps at 01:30 into `/opt/backups` (14 days), off-site at 03:00 by rclone crypt to Drive with the `drive.file` scope (30 days) | Dumps land inside the 02:30 VM backup too; crypt means Google holds only ciphertext; drive.file limits rclone to its own files; the keys live only in 1Password |
 | 69 | The Windows prdsrv1 left Terraform through a `removed` block (`destroy = false`) and was deleted with `qm destroy` after its archive passed `zstd -t`; the Linux prdsrv1 reuses VMID 100 from the template | One apply can't destroy and recreate the same VMID in order; forgetting first keeps the plan honest (no surprise destroy), and the delete happened only once the archive was proven |
+| 70 | property-search stays on prdsrv2 beside Postgres; only n8n moved | It is a scheduled job, not a web app; its trigger (n8n SSH to .114, forced command) and secrets stay untouched |
+| 71 | Apps on prdsrv1 keep the hostname `postgres`, mapped to 10.69.20.114 with `extra_hosts` | No connection string or 1Password secret had to change, and moving Postgres later is one line per stack |
+| 72 | Dozzle agents use a certificate made for the lab, not Dozzle's built-in one | The built-in pair is public, so anyone reaching port 7007 could read logs and run commands in containers |
 
 ## Open items
 
