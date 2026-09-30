@@ -115,6 +115,7 @@
   tags: [backups]
 
 - name: Nightly backup job (all VMs except lab 900-919)
+  when: pve_backup_vzdump | default(true)
   ansible.builtin.command: >
     pvesh {{ 'set' if pve_backup_job.rc == 0 else 'create' }} /cluster/backup{{ '/nightly' if pve_backup_job.rc == 0 else '' }}
     {{ '' if pve_backup_job.rc == 0 else '--id nightly' }}
@@ -127,6 +128,14 @@
     --prune-backups '{{ pve_backup_retention }}'
     --notes-template '{{ pve_backup_notes }}'
     --enabled 1
+  changed_when: true
+  tags: [backups]
+
+# Retired on hosts where the Backup Server has taken over (pve_backup_vzdump: false). Its old
+# files in data/dump stay until removed by hand (lab-rebuild-plan phase 9).
+- name: Old nightly job removed
+  when: not (pve_backup_vzdump | default(true)) and pve_backup_job.rc == 0
+  ansible.builtin.command: pvesh delete /cluster/backup/nightly
   changed_when: true
   tags: [backups]
 
@@ -290,6 +299,55 @@
         --prune-backups keep-all=1
       when: pve_copy_storage.rc != 0
       changed_when: true
+      delegate_to: "{{ pve_copy_host }}"
+
+# Retiring the copy (pve_backup_copy_remove_from: <host>): timer, script and key go here; the
+# restricted key, the storage and the copies go on the target. Hard links (the archive) keep
+# their files: deleting the copy folder removes only this name for them.
+- name: Backup copy to {{ pve_backup_copy_remove_from | default('another host') }} removed
+  when: pve_backup_copy_remove_from is defined
+  tags: [backup_copy]
+  vars:
+    pve_copy_host: "{{ pve_backup_copy_remove_from | default(inventory_hostname) }}"
+    pve_copy_id: "{{ inventory_hostname }}-copy"
+    pve_copy_path: "/mnt/pve/data/{{ inventory_hostname }}-copy"
+  block:
+    - name: Copy timer stopped and disabled
+      ansible.builtin.systemd:
+        name: pve-backup-copy.timer
+        enabled: false
+        state: stopped
+      failed_when: false
+
+    - name: Copy script, units and keys removed
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/systemd/system/pve-backup-copy.timer
+        - /etc/systemd/system/pve-backup-copy.service
+        - /usr/local/sbin/pve-backup-copy
+        - /root/.ssh/id_ed25519_backup_copy
+        - /root/.ssh/id_ed25519_backup_copy.pub
+        - /root/.ssh/known_hosts_backup_copy
+
+    - name: Restricted key removed on {{ pve_copy_host }}
+      ansible.builtin.lineinfile:
+        path: /root/.ssh/authorized_keys2
+        regexp: 'backup-copy {{ inventory_hostname }}$'
+        state: absent
+      delegate_to: "{{ pve_copy_host }}"
+
+    - name: Copy storage removed on {{ pve_copy_host }}
+      ansible.builtin.shell: "pvesm status --storage {{ pve_copy_id }} >/dev/null 2>&1 && pvesm remove {{ pve_copy_id }} && echo removed || true"
+      register: pve_copy_storage_rm
+      changed_when: "'removed' in pve_copy_storage_rm.stdout"
+      delegate_to: "{{ pve_copy_host }}"
+
+    - name: Copies removed on {{ pve_copy_host }}
+      ansible.builtin.file:
+        path: "{{ pve_copy_path }}"
+        state: absent
       delegate_to: "{{ pve_copy_host }}"
 
 # Archive: backups kept outside every job (decision 63) ---------------------------------------
