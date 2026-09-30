@@ -253,6 +253,20 @@ Status 2026-09-30: phase 6 done.
 2. prdsrv2 memory stays 16 GB for the databases; revisit after a month of use.
 3. tstsrv1 on `local-lvm` (SATA) via `make up`.
 
+Status 2026-09-30:
+- homelab-apps `hosts/<host>` lists each host's folders; every host uses a git sparse checkout of
+  its own, so `/opt/docker` (and Arcane on prdsrv1) shows only what runs there.
+- prdsrv2: the moved stacks' folders archived to `/root/phase6-leftovers-2026-09-30.tgz` (6 MB,
+  root only) and removed; old Uptime Kuma container removed; 9.5 GB of unused images pruned
+  (disk 44% to 34%). Memory left at 16 GB (3 GB used): revisit after a month.
+- Role `firewall` (UFW, prdsrv1 and prdsrv2): only SSH is a host service; Docker-published
+  ports bypass UFW, so they are not listed. prdsrv1 now has UFW on; prdsrv2 lost its 80/443
+  and DNS rules (left from Caddy, or ignored by Docker). Not on prdsrv3 (container).
+- Follow-up, not done: limit the database ports on prdsrv2 to prdsrv1, prdsrv3 and the Mac. That
+  needs rules in Docker's DOCKER-USER chain, not UFW.
+- tstsrv1 in `terraform/envs/lab/vms.auto.tfvars` (2 cores, 4 GB, 40 GB on `local-lvm`):
+  O'Neil runs `make up`, then `make configure ENV=lab`.
+
 ### Phase 8: prove it and write it down
 
 1. Restore drill: restore prdsrv2 from the Backup Server to VMID 919 with the NIC unplugged,

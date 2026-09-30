@@ -1,0 +1,9 @@
+---
+# UFW for services the host itself runs (SSH). Ports published by Docker do NOT go through
+# UFW (Docker writes its own iptables rules first), so web, DNS and database ports are not
+# listed here: a UFW rule for them would look like protection and do nothing.
+firewall_allow:
+  - { port: "22", proto: tcp, comment: "SSH (key only)" }
+# Rules to delete where they were added by hand before this role (e.g. prdsrv2's 80/443 from
+# when Caddy ran there). Same keys as firewall_allow, plus `from` when the rule had one.
+firewall_remove: []

@@ -15,6 +15,12 @@ all:
           ansible_host: 10.69.20.114
           # Docker was set up by hand: never rewrite daemon.json or restart Docker
           docker_manage_daemon_json: false
+          # Left from when Caddy ran here (80/443) and a DNS rule Docker's published port ignores
+          firewall_remove:
+            - { port: "80", proto: tcp }
+            - { port: "443", proto: tcp }
+            - { port: "443", proto: udp }
+            - { port: "53", from: 10.69.20.0/24 }
           # Nightly dumps and the off-site copy (roles/db_backups, homelab-apps backups/)
           db_backups: true
         # Infra container on prx2 (terraform/envs/prod/containers.tf); first run: make lxc-bootstrap

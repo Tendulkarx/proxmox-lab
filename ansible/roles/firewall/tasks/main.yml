@@ -1,0 +1,39 @@
+---
+# Runs on VMs only: UFW does not work reliably inside an unprivileged container (prdsrv3), where
+# the Proxmox firewall is the place for rules.
+- name: UFW installed
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Allowed (before enabling, so SSH is never cut)
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto | default(omit) }}"
+    from_ip: "{{ item.from | default('any') }}"
+    comment: "{{ item.comment | default(omit) }}"
+  loop: "{{ firewall_allow }}"
+  loop_control:
+    label: "{{ item.port }}/{{ item.proto | default('any') }} from {{ item.from | default('any') }}"
+
+- name: Old rules removed
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto | default(omit) }}"
+    from_ip: "{{ item.from | default('any') }}"
+    delete: true
+  loop: "{{ firewall_remove }}"
+  loop_control:
+    label: "{{ item.port }}/{{ item.proto | default('any') }} from {{ item.from | default('any') }}"
+
+- name: Deny incoming by default, allow outgoing
+  community.general.ufw:
+    direction: "{{ item }}"
+    default: "{{ 'deny' if item == 'incoming' else 'allow' }}"
+  loop: [incoming, outgoing]
+
+- name: UFW enabled
+  community.general.ufw:
+    state: enabled
