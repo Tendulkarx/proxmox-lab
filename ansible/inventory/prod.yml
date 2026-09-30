@@ -28,11 +28,17 @@ all:
             - { port: 1521, comment: Oracle, allow: *db_clients }
             - { port: 8081, comment: "Pi-hole page, for Caddy on prdsrv1", allow: [10.69.20.113] }
             - { port: 7007, comment: "Dozzle agent, for Dozzle on prdsrv1", allow: [10.69.20.113] }
+            - { port: 2375, comment: "read-only Docker API, for Homarr on prdsrv1", allow: [10.69.20.113] }
           # Nightly dumps and the off-site copy (roles/db_backups, homelab-apps backups/)
           db_backups: true
         # Infra container on prx2 (terraform/envs/prod/containers.tf); first run: make lxc-bootstrap
         prdsrv3:
           ansible_host: 10.69.20.115
+          # Ports Docker publishes here: all only for prdsrv1 (Caddy, Dozzle, Homarr); DNS stays open
+          docker_firewall_ports:
+            - { port: 3001, comment: "Uptime Kuma, for Caddy on prdsrv1", allow: [10.69.20.113] }
+            - { port: 7007, comment: "Dozzle agent, for Dozzle on prdsrv1", allow: [10.69.20.113] }
+            - { port: 2375, comment: "read-only Docker API, for Homarr on prdsrv1", allow: [10.69.20.113] }
       vars:
         ansible_user: turbx
         ansible_ssh_private_key_file: ~/.ssh/id_ed25519_homelab
