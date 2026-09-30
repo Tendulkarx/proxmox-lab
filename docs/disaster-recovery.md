@@ -15,7 +15,7 @@ cannot be recovered today and the order to close it.**
 | Terraform state | Mac only, git-ignored | No, but rebuildable by re-import |
 | Dotfiles | `~/development/dotfiles` | Yes, if pushed: github.com/Tendulkarx/dotfiles (private) |
 | App stacks (`/opt/docker/*` on prdsrv1, prdsrv2, prdsrv3) | github.com/Tendulkarx/homelab-apps (private; each host has a sparse checkout of its folders, `hosts/<host>`). `.env` values in 1Password as `prdsrv2-<app>`, plus the per-host values in its README | Yes |
-| VM backups | prx1: Proxmox Backup Server on prx2 (`pbs-nightly` 03:30, 7 daily, 4 weekly, 3 monthly, verified weekly; the only job on prx1 since 2026-09-30). prx2 (prdsrv3): `nightly` 02:30 to its own `data` (keep 2). Two old vzdump files of prdsrv2 remain in prx1's `data`, no longer pruned | Survives prx1 entirely; not off-site (tier 2, phase 9) |
+| VM backups | prx1: Proxmox Backup Server on prx2 (`pbs-nightly` 03:30, 7 daily, 4 weekly, 3 monthly, verified weekly; the only job on prx1 since 2026-09-30). prx2 (prdsrv3): `nightly` 02:30 to its own `data` (keep 2). prx1's `data` holds no backups any more (the last old files were deleted 2026-09-30) | Survives prx1 entirely; not off-site (tier 2, phase 9) |
 | Database and app dumps | `/opt/backups/<date>` on prdsrv2 (Postgres, SQL Server, Oracle) and prdsrv1 (n8n, Paperless), 01:30, 14 days; inside the VM backups too | Yes: encrypted copy in Google Drive `homelab-offsite/daily/<date>/<host>`, 30 days (03:00) |
 | Off-site keys (rclone crypt, Drive login) | 1Password `prdsrv2-rclone`: **the only way to read the Drive copies** | Yes |
 | The last Windows prdsrv1 | storage `archive` on prx2 (protected, final backup of 2026-09-30) | No (on-site only) |

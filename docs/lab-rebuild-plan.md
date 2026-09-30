@@ -324,7 +324,8 @@ Left, all O'Neil's:
 - ~~From 2026-10-13: retire the old `nightly` job~~ Done early on 2026-09-30 (O'Neil's call), after
   every Backup Server task was OK and a full verify read all 67 GB back with 0 errors: PR #1 merged,
   `nightly` removed on prx1, the copy (timer, keys, storage, 176 GB folder) removed; prx2's disk
-  27% to 16.5%. The archive kept both Windows backups (hard links). Was: retire the old `nightly` job to `data` and its 06:00 copy (pve_host:
+  27% to 16.5%. The archive kept both Windows backups (hard links). The old job's last two prdsrv2
+  files on prx1 deleted too (the Backup Server holds verified copies); prx1's `data` 20% to 14%. Was: retire the old `nightly` job to `data` and its 06:00 copy (pve_host:
   unset `pve_backup_copy_to`, move `nightly` off prx1), after checking two weeks of
   `pbs-nightly` and verify results.
 
