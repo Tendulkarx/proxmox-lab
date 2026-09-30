@@ -315,8 +315,9 @@ Also done in phase 9: database ports limited (role `docker_firewall`, decision 7
 `scripts/gmail-alerts.sh --update` for the password rotation.
 
 Left, all O'Neil's:
-- Own Google OAuth client for the Drive copy before rclone's shared one is retired
-  (homelab-apps `backups/offsite.md`), then `setup-offsite.sh --reauth`.
+- Deferred 2026-09-30 (O'Neil): how the Drive copy signs in once rclone's shared Google client is
+  retired. An own Google app needs a public home page and privacy link to publish; Backblaze B2's
+  free 10 GB is the alternative. Until then it works, and the Off-site monitors alert if it stops.
 - ~~Rotate the Gmail app password~~: done 2026-09-30 (new app password, `gmail-alerts.sh --update`,
   every sender checked, old one revoked). The Google Sheet key was rotated by O'Neil on 2026-09-28/29
   (Sheet access checked 2026-09-30).
