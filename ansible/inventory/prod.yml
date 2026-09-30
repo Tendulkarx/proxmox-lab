@@ -44,6 +44,7 @@ all:
           # Ports Docker publishes here: all only for prdsrv1 (Caddy, Dozzle, Homarr); DNS stays open
           docker_firewall_ports:
             - { port: 3001, comment: "Uptime Kuma, for Caddy on prdsrv1", allow: [10.69.20.113] }
+            - { port: 8081, comment: "Pi-hole 2 web page, for Caddy on prdsrv1", allow: [10.69.20.113] }
             - { port: 7007, comment: "Dozzle agent, for Dozzle on prdsrv1", allow: [10.69.20.113] }
             - { port: 2375, comment: "read-only Docker API, for Homarr on prdsrv1", allow: [10.69.20.113] }
       vars:
