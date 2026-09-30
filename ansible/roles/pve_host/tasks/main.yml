@@ -375,6 +375,7 @@
   vars:
     pve_alert_user: "{{ lookup('ansible.builtin.pipe', 'op read ' ~ (pve_alert_user_ref | quote)) }}"
     pve_alert_password: "{{ lookup('ansible.builtin.pipe', 'op read ' ~ (pve_alert_password_ref | quote)) }}"
+    pve_alert_to: "{{ pve_alert_user.split('@')[0] }}+{{ pve_alert_tag }}@{{ pve_alert_user.split('@')[1] }}"
   block:
     - name: Does the gmail target exist?
       ansible.builtin.command: pvesh get /cluster/notifications/endpoints/smtp/gmail
@@ -388,7 +389,7 @@
         pvesh create /cluster/notifications/endpoints/smtp --name gmail
         --server smtp.gmail.com --mode starttls --port 587
         --username {{ pve_alert_user | quote }} --password {{ pve_alert_password | quote }}
-        --from-address {{ pve_alert_user | quote }} --mailto {{ pve_alert_user | quote }}
+        --from-address {{ pve_alert_user | quote }} --mailto {{ pve_alert_to | quote }}
         --author 'Proxmox {{ pve_node }}' --comment 'proxmox-lab: alerts'
       when: pve_gmail.rc != 0
       changed_when: true

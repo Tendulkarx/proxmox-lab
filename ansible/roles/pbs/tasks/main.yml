@@ -146,6 +146,7 @@
   vars:
     pbs_alert_user: "{{ lookup('ansible.builtin.pipe', 'op read ' ~ (pve_alert_user_ref | quote)) }}"
     pbs_alert_password: "{{ lookup('ansible.builtin.pipe', 'op read ' ~ (pve_alert_password_ref | quote)) }}"
+    pbs_alert_to: "{{ pbs_alert_user.split('@')[0] }}+{{ pve_alert_tag | default('homelab') }}@{{ pbs_alert_user.split('@')[1] }}"
   block:
     - name: Current notification targets and matchers
       ansible.builtin.shell: |
@@ -163,7 +164,7 @@
         proxmox-backup-manager notification endpoint smtp create gmail
         --server smtp.gmail.com --mode starttls --port 587
         --username {{ pbs_alert_user | quote }} --password {{ pbs_alert_password | quote }}
-        --from-address {{ pbs_alert_user | quote }} --mailto {{ pbs_alert_user | quote }}
+        --from-address {{ pbs_alert_user | quote }} --mailto {{ pbs_alert_to | quote }}
         --author 'Proxmox Backup Server' --comment 'proxmox-lab: alerts'
       when: "'gmail' not in (pbs_notif.stdout_lines[0] | from_json)"
       changed_when: true

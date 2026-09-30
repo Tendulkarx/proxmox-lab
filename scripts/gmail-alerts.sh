@@ -11,6 +11,7 @@
 #    every existing one (it had none). Uptime Kuma stops for a few seconds while it is added.
 # 3. A test email from each Proxmox target.
 #
+# Alerts go to <user>+homelab@gmail.com, so one Gmail filter labels them all.
 # The login is the Gmail app password property-search uses. It goes from 1Password to the
 # servers over SSH and is never printed or saved on the Mac.
 set -euo pipefail
@@ -37,11 +38,12 @@ echo "== Uptime Kuma"
 kuma_py='
 import json, sqlite3, sys
 user, pw = sys.stdin.read().split("\n")[:2]
+to = user.split("@")[0] + "+homelab@" + user.split("@")[1]  # pve_alert_tag in pve_host
 db = sqlite3.connect("/opt/docker/uptime-kuma/data/kuma.db")
 row = db.execute("select id, config from notification where name = \"Gmail\"").fetchone()
 if row:
     cfg = json.loads(row[1])
-    cfg.update(smtpUsername=user, smtpPassword=pw)
+    cfg.update(smtpUsername=user, smtpPassword=pw, smtpTo=to)
     db.execute("update notification set config = ? where id = ?", (json.dumps(cfg), row[0]))
     db.commit()
     print("Gmail notification updated")
@@ -49,7 +51,7 @@ if row:
 cfg = {"name": "Gmail", "type": "smtp", "isDefault": True, "applyExisting": True,
        "smtpHost": "smtp.gmail.com", "smtpPort": 587, "smtpSecure": False,
        "smtpIgnoreTLSError": False, "smtpUsername": user, "smtpPassword": pw,
-       "smtpFrom": "Uptime Kuma <" + user + ">", "smtpTo": user}
+       "smtpFrom": "Uptime Kuma <" + user + ">", "smtpTo": to}
 cur = db.execute("insert into notification (name, config, active, user_id, is_default) values (?, ?, 1, 1, 1)",
                  ("Gmail", json.dumps(cfg)))
 nid = cur.lastrowid
