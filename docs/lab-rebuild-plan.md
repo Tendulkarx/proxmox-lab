@@ -317,8 +317,9 @@ Also done in phase 9: database ports limited (role `docker_firewall`, decision 7
 Left, all O'Neil's:
 - Own Google OAuth client for the Drive copy before rclone's shared one is retired
   (homelab-apps `backups/offsite.md`), then `setup-offsite.sh --reauth`.
-- Rotate the Gmail app password (then `scripts/gmail-alerts.sh --update`; property-search reads
-  1Password each run) and the Google key flagged earlier. Both were in the Windows `.env`.
+- ~~Rotate the Gmail app password~~: done 2026-09-30 (new app password, `gmail-alerts.sh --update`,
+  every sender checked, old one revoked). Still to do: the Google Sheet key flagged earlier (also
+  in the Windows `.env`).
 - From 2026-10-13: retire the old `nightly` job to `data` and its 06:00 copy (pve_host:
   unset `pve_backup_copy_to`, move `nightly` off prx1), after checking two weeks of
   `pbs-nightly` and verify results.
