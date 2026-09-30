@@ -181,7 +181,7 @@ make audit          # or /audit in Claude Code
 ```
 
 Done when every host and VM report is clean, `make plan` and `make plan ENV=prod` both say
-`No changes`, and Homepage shows every service up.
+`No changes`, and Homarr (`home.example.com`) shows every service, host and container up.
 
 ## Gaps (what stops a full recovery today), in the order to close them
 

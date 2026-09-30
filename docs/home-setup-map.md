@@ -36,7 +36,7 @@ Windows machines only accept SSH and Remote Desktop from these three ranges.
 |---|---|---|---|
 | prx1 (`prx-server-1`) | Proxmox VE 9, 62 GB RAM, main host | 10.69.20.130 | `ansible/roles/pve_host` (`make hosts`) |
 | prx2 (`prx-server-2`) | Proxmox VE 9, 7.6 GB RAM: Proxmox Backup Server (datastore `main`, UI on port 8007), storage `archive`, prdsrv3 | 10.69.20.131 | same, plus role `pbs` |
-| prdsrv1 | Ubuntu VM on prx1 (VMID 100): the apps and Caddy (Homarr dashboard at `dash.`, Homepage, Paperless, n8n, Metabase, Dozzle, Arcane); Windows until 2026-09-30 | 10.69.20.113 | Terraform prod + Ansible + dotfiles |
+| prdsrv1 | Ubuntu VM on prx1 (VMID 100): the apps and Caddy (Homarr dashboard at `home.`/`dash.`, Paperless, n8n, Metabase, Dozzle, Arcane); Windows until 2026-09-30 | 10.69.20.113 | Terraform prod + Ansible + dotfiles |
 | prdsrv3 | Ubuntu container on prx2 (VMID 102): Uptime Kuma, second Pi-hole, nebula-sync | 10.69.20.115 | Terraform prod + Ansible |
 | prdsrv2 | Ubuntu VM on prx1 (VMID 101): the database server (Postgres, SQL Server, Oracle), primary Pi-hole, property-search | 10.69.20.114 | Terraform prod + Ansible + dotfiles |
 | tstsrv<N> | Ubuntu lab VMs on prx1 (VMID 899 + N) | 10.69.20.(199 + N) | Terraform lab + Ansible + dotfiles |
