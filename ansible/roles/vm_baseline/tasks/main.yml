@@ -12,7 +12,6 @@
 - name: Base packages
   ansible.builtin.apt:
     name:
-      - qemu-guest-agent
       - unattended-upgrades
       - curl
       - wget
@@ -25,6 +24,15 @@
       - dnsutils
       - ca-certificates
       - locales
+    state: present
+
+# VMs only: a container (LXC, e.g. prdsrv3) runs on the host's kernel and has no guest agent
+# port or serial console.
+- name: VM packages
+  when: ansible_virtualization_type != 'lxc'
+  ansible.builtin.apt:
+    name:
+      - qemu-guest-agent
       # The cloud image ships linux-image-virtual, which leaves out the bochs display
       # driver: the console then stays in 80x25 VGA text mode. The generic kernel adds it
       # (1280x800 framebuffer, same as the ISO-installed prod VMs). Takes effect on reboot.
@@ -38,13 +46,14 @@
   ansible.builtin.stat:
     path: /dev/virtio-ports/org.qemu.guest_agent.0
   register: vm_baseline_qga_port
+  when: ansible_virtualization_type != 'lxc'
 
 - name: Guest agent running
   ansible.builtin.service:
     name: qemu-guest-agent
     state: started
     enabled: true
-  when: vm_baseline_qga_port.stat.exists
+  when: ansible_virtualization_type != 'lxc' and vm_baseline_qga_port.stat.exists
   ignore_errors: "{{ ansible_check_mode }}"  # needs packages a dry run doesn't install
 
 - name: Guest agent waiting on Proxmox
@@ -53,7 +62,7 @@
       qemu-guest-agent is installed but the VM has no agent port yet. Enable
       "QEMU Guest Agent" on this VM in Proxmox, then fully stop and start it (a reboot
       from inside the guest is not enough). The agent starts by itself after that.
-  when: not vm_baseline_qga_port.stat.exists
+  when: ansible_virtualization_type != 'lxc' and not vm_baseline_qga_port.stat.exists
 
 - name: Timezone
   community.general.timezone:
@@ -130,4 +139,5 @@
   ansible.builtin.systemd:
     name: serial-getty@ttyS0.service
     enabled: true
+  when: ansible_virtualization_type != 'lxc'
   tags: [serial_console]

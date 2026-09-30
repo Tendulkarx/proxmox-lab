@@ -1,0 +1,60 @@
+---
+# First login to a new container (LXC), which has no cloud-init to make the admin user. Run once
+# after `make up ENV=prod`, then `make configure ENV=prod NAME=<name>` as for any VM:
+#
+#   make lxc-bootstrap NAME=prdsrv3
+#
+# Logs in as root with the key Terraform put there, makes admin_user with the same key and
+# passwordless sudo. vm_baseline then turns root SSH off, so this only works on a new container
+# (or from `pct enter <vmid>` on the host).
+- name: Admin user for a new container
+  hosts: all
+  gather_facts: false
+  vars:
+    ansible_user: root
+  tasks:
+    - name: Python for Ansible
+      ansible.builtin.raw: test -e /usr/bin/python3 || (apt-get update -q && apt-get install -yq python3)
+      register: lxc_python
+      changed_when: "'Setting up' in lxc_python.stdout"
+
+    - name: Packages the admin user needs
+      ansible.builtin.apt:
+        name: [sudo, openssh-server]
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: "{{ admin_user }}"
+      ansible.builtin.user:
+        name: "{{ admin_user }}"
+        shell: /bin/bash
+        groups: [sudo]
+        append: true
+
+    - name: ~/.ssh for {{ admin_user }}
+      ansible.builtin.file:
+        path: "/home/{{ admin_user }}/.ssh"
+        state: directory
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: "0700"
+
+    - name: SSH key for {{ admin_user }} (root's, from Terraform)
+      ansible.builtin.copy:
+        src: /root/.ssh/authorized_keys
+        remote_src: true
+        dest: "/home/{{ admin_user }}/.ssh/authorized_keys"
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: "0600"
+
+    - name: Passwordless sudo for {{ admin_user }}
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/90-{{ admin_user }}
+        content: |
+          # Managed by Ansible (proxmox-lab)
+          {{ admin_user }} ALL=(ALL) NOPASSWD:ALL
+        owner: root
+        group: root
+        mode: "0440"
+        validate: /usr/sbin/visudo -cf %s

@@ -118,6 +118,28 @@ Status 2026-09-29: steps 1 to 4 done; step 5 (alerts) open.
 Check: stop Pi-hole on prdsrv2 briefly and confirm names still resolve; Uptime Kuma still shows
 every monitor and alerts. Undo: start the prdsrv2 containers again, DNS server 2 back to empty.
 
+Run order (prepared 2026-09-29; homelab-apps PR #9 holds the stacks):
+1. `make hosts ARGS="--tags templates --limit prx2"` downloads the Ubuntu 24.04 container
+   template; `make plan ENV=prod` must show 1 to add (prdsrv3), 0 to change; `make up ENV=prod`.
+2. `make lxc-bootstrap NAME=prdsrv3`, then `make configure ENV=prod NAME=prdsrv3`
+   (vm_baseline skips the kernel, guest agent and serial console in a container).
+3. On prdsrv3: a read-only deploy key for homelab-apps, clone to `/opt/docker`, `.env` files
+   from `op inject` plus the prdsrv3 values in the README; start `pihole` and `nebula-sync`.
+   Check: `dig @10.69.20.115 prx1.home.arpa` and a blocked domain give the same answers as .114.
+4. Uptime Kuma: stop it on prdsrv2, copy `data/` (13 MB), start it on prdsrv3, point Caddy's
+   `uptime.` at `10.69.20.115:3001`. Four database monitors name containers on prdsrv2's
+   network (`postgres`, `sqlserver`, Oracle, `paperless-broker`): the first three change to
+   10.69.20.114 and their published ports. Paperless's Redis is not published outside prdsrv2,
+   so its monitor goes; the Paperless web monitor stays.
+5. UniFi (O'Neil): DNS server 2 = 10.69.20.115 on every VLAN.
+
+Status 2026-09-30: steps 1 to 3 done. prdsrv3 runs Pi-hole and nebula-sync (first sync done;
+.114 and .115 give the same answers for local records, internet names and blocked domains),
+156 MB of its 1 GB used. Docker works with `nesting` alone. homelab-apps is cloned with a
+read-only deploy key, on branch `prdsrv3-infra` until PR #9 is merged. Left: step 4 (Uptime
+Kuma), step 5 (UniFi), and the console password (`make configure ENV=prod NAME=prdsrv3
+ARGS="--tags console_password"`, needs Touch ID).
+
 ### Phase 4: database dumps and off-site tier 1 (free)
 
 1. On prdsrv2, nightly: `pg_dump` of every Postgres database, SQL Server `BACKUP DATABASE`,

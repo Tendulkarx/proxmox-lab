@@ -10,6 +10,9 @@ all:
           ansible_host: 10.69.20.114
           # Docker was set up by hand: never rewrite daemon.json or restart Docker
           docker_manage_daemon_json: false
+        # Infra container on prx2 (terraform/envs/prod/containers.tf); first run: make lxc-bootstrap
+        prdsrv3:
+          ansible_host: 10.69.20.115
       vars:
         ansible_user: turbx
         ansible_ssh_private_key_file: ~/.ssh/id_ed25519_homelab

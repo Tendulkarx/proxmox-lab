@@ -320,6 +320,15 @@
       when: pve_archive_storage.rc != 0
       changed_when: true
 
+# Container templates (LXC) on `data`, for Terraform containers (prdsrv3). Downloading needs
+# root, which the Terraform token deliberately is not.
+- name: Container templates
+  ansible.builtin.command: "pveam download data {{ item }}"
+  args:
+    creates: "/mnt/pve/data/template/cache/{{ item }}"
+  loop: "{{ pve_lxc_templates | default([]) }}"
+  tags: [templates]
+
 # S7: VM start order ------------------------------------------------------------------
 - name: Current start order
   ansible.builtin.command: "qm config {{ item.key }}"

@@ -14,6 +14,7 @@
 #   make backup NAME=prdsrv1          one-off backup of a VM by name (finds its host and VMID)
 #   make restart NAME=prdsrv1         FULL stop and start (applies pending hardware changes); asks first
 #   make prod-generate      Phase 4: describe existing prod VMs as Terraform (no changes made)
+#   make lxc-bootstrap NAME=prdsrv3   first login to a new container: makes turbx (then make configure)
 
 ENV ?= lab
 TF  := op run --env-file=.env.op -- terraform -chdir=terraform/envs/$(ENV)
@@ -21,10 +22,10 @@ TF  := op run --env-file=.env.op -- terraform -chdir=terraform/envs/$(ENV)
 # file (never your main ~/.ssh/known_hosts), cleared whenever lab VMs are destroyed.
 LAB_KNOWN_HOSTS := $(HOME)/.ssh/known_hosts.proxmox-lab
 
-.PHONY: help check init plan up list down destroy-lab ssh fmt validate ansible-deps configure forget-host hosts hosts-check prod-generate
+.PHONY: help check init plan up list down destroy-lab ssh fmt validate ansible-deps configure forget-host hosts hosts-check prod-generate lxc-bootstrap
 
 help:
-	@sed -n '2,17p' Makefile
+	@sed -n '2,18p' Makefile
 
 check:
 	@command -v terraform >/dev/null || { echo "Install terraform: brew install hashicorp/tap/terraform"; exit 1; }
@@ -87,6 +88,11 @@ hosts-check:
 
 hosts:
 	cd ansible && ansible-playbook -i inventory/proxmox.yml playbooks/proxmox-hosts.yml $(ARGS)
+
+lxc-bootstrap:
+	@test -n "$(NAME)" || { echo "Usage: make lxc-bootstrap NAME=<container>"; exit 1; }
+	cd ansible && ANSIBLE_SSH_ARGS="-o StrictHostKeyChecking=accept-new" \
+	  ansible-playbook -i inventory/prod.yml playbooks/lxc-bootstrap.yml --limit $(NAME) $(ARGS)
 
 prod-generate: check
 	@test ! -f terraform/envs/prod/generated.tf || { echo "terraform/envs/prod/generated.tf already exists; move it aside first"; exit 1; }
