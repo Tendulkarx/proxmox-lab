@@ -6,8 +6,10 @@ all:
         prx1:
           ansible_host: 10.69.20.130
           pve_node: prx-server-1
-          # prx1's backups share a disk with its VMs: copy them to prx2's 1 TB disk
-          pve_backup_copy_to: prx2
+          # The Backup Server on prx2 took over (2026-10-13, after two weeks side by side): the old
+          # nightly job to `data` and its 06:00 copy to prx2 are retired
+          pve_backup_vzdump: false
+          pve_backup_copy_remove_from: prx2
           # Also back up nightly to the Backup Server on prx2 (storage made by scripts/pbs-connect.sh)
           pve_backup_pbs_storage: pbs
         prx2:
