@@ -76,7 +76,7 @@ pvesh set /cluster/options --tag-style 'color-map=prod:c62828:ffffff;lab:2e7d32:
 | M4 libknet1 | "not correctly installed" | cosmetic (renamed libknet1t64 on PVE 9); only libknet1t64 installed |
 | M5 prdsrv2 guest agent | off | on and responding |
 | S1 Root SSH | password allowed | key only (drop-in overrides sshd_config). **TOTP on root@pam still to do** |
-| S2 Alerts | none | **still none** (ntfy ready in `pve_host`, needs a topic URL) |
+| S2 Alerts | none | **Done 2026-09-30**: Gmail target and warnings/errors matcher on both hosts and the Backup Server (`scripts/gmail-alerts.sh`, decision 67) |
 | S3 Hostnames | `*.ob.local` | `*.home.arpa`, node certs reissued (valid to 2028) |
 | S4 prdsrv2 discard/SSD | off | on |
 | S5 CPU type | x86-64-v2-AES on prdsrv2/3 | `host` on all |
@@ -149,7 +149,7 @@ Source: `make audit`. prdsrv3 is retired and test1 is now tstsrv1, so `audit/vm-
 |---|---|---|
 | V2 | prdsrv2 `paperless-broker: 14413 error lines in 24h`: `Failed opening the temp RDB file ... Permission denied` | Redis can't write `/data`, so it may refuse writes and stall Paperless. Fix the ownership of the broker's data folder (Redis runs as UID 999), restart the broker |
 | V3 | prdsrv2 `fail2ban: failed`, `section 'sshd' already exists` (jail.local line 278) | Remove the duplicate `[sshd]` block; manage `jail.local` from Ansible |
-| S2 | `notifications.cfg: none` on both hosts | ntfy target from `pve_host` (needs a topic URL). Nothing tells you a backup or disk failed |
+| S2 | `notifications.cfg: none` on both hosts | **Closed 2026-09-30**: Gmail alerts (warnings and errors) on both hosts, the Backup Server and Uptime Kuma |
 | Old root login | prx1 journal: `authentication failure; rhost=::ffff:10.69.20.114 user=root@pam` 07:53 and 08:08 | Homepage on prdsrv2 has `config/proxmox.yaml`, the likely source. Give it a `PVEAuditor` API token on each host |
 | S1 | `root@pam enabled=1 tfa=False` on both | TOTP on root@pam; password stays in 1Password as break-glass |
 | V5 | prdsrv2 `no daemon.json (container logs never rotate)` | Same `daemon.json` as tstsrv1 (10 MB x 3); needs a Docker restart |

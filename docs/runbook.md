@@ -63,5 +63,11 @@ From any folder, `lab <command>` runs the make target here (`lab` alone goes to 
 - A prod VM restart is always your call: `lab restart <vm>` (it asks first). A restart from
   inside the guest does **not** apply hardware changes; `lab status` shows any still pending.
 - The backup disk filling up, or backups growing: `docs/reclaim-disk-space.md`.
+- A backup alert email (Proxmox, Backup Server) or a down "Database dumps" / "App backups" /
+  "Off-site copy" monitor: `journalctl -u db-dumps -u db-offsite` on that host; re-run with
+  `sudo systemctl start db-dumps db-offsite`. Restores: `docs/disaster-recovery.md`.
+- An app needs `docker compose up` on a host: only its own folders are there (homelab-apps
+  `hosts/<host>`). A new app: add its folder to the right list first.
+- Ports published by Docker bypass UFW; UFW (role `firewall`) only guards SSH on the VMs.
 - Setting up any Windows or Mac machine: the dotfiles README and its troubleshooting section.
   The old Windows prdsrv1 is only a backup now (`archive` on prx2, lab-rebuild-plan phase 5).

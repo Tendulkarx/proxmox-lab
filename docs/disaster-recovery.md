@@ -1,7 +1,8 @@
 # Disaster recovery and full rebuild
 
 How to get the lab back after anything from a broken VM to losing everything, and how to
-rebuild from bare metal by choice. Written 2026-09-22. **Read "Gaps" first: it lists what
+rebuild from bare metal by choice. Written 2026-09-22; updated 2026-09-30 for the rebuilt lab
+(lab-rebuild-plan phases 1 to 8). **Read "Gaps" first: it lists what
 cannot be recovered today and the order to close it.**
 
 ## What you need to recover anything
@@ -13,8 +14,11 @@ cannot be recovered today and the order to close it.**
 | SSH key `id_ed25519_homelab` | Mac, and 1Password (SSH Key item `id_ed25519_homelab`, vault Development, since 2026-09-24) | Yes |
 | Terraform state | Mac only, git-ignored | No, but rebuildable by re-import |
 | Dotfiles | `~/development/dotfiles` | Yes, if pushed: github.com/Tendulkarx/dotfiles (private) |
-| App stacks (`/opt/docker/*` on prdsrv2) | github.com/Tendulkarx/homelab-apps (private; `/opt/docker` is the working copy, the Mac has a clone). `.env` values in 1Password as `prdsrv2-<app>` | Yes (app data: only in the VM backups) |
-| VM backups (nightly 02:30, keep 2) | `data` disk of the same host, and prx1's copied to prx2 (`prx1-copy`) at 06:00 | Survives one host's disk; nothing off-site yet (gap G3) |
+| App stacks (`/opt/docker/*` on prdsrv1, prdsrv2, prdsrv3) | github.com/Tendulkarx/homelab-apps (private; each host has a sparse checkout of its folders, `hosts/<host>`). `.env` values in 1Password as `prdsrv2-<app>`, plus the per-host values in its README | Yes |
+| VM backups | prx1: Proxmox Backup Server on prx2 (`pbs-nightly` 03:30, 7 daily, 4 weekly, 3 monthly, verified weekly); until 2026-10-13 also `nightly` 02:30 to `data` (keep 2) copied to prx2 at 06:00. prx2 (prdsrv3): `nightly` to its own `data` | Survives prx1 entirely; not off-site (tier 2, phase 9) |
+| Database and app dumps | `/opt/backups/<date>` on prdsrv2 (Postgres, SQL Server, Oracle) and prdsrv1 (n8n, Paperless), 01:30, 14 days; inside the VM backups too | Yes: encrypted copy in Google Drive `homelab-offsite/daily/<date>/<host>`, 30 days (03:00) |
+| Off-site keys (rclone crypt, Drive login) | 1Password `prdsrv2-rclone`: **the only way to read the Drive copies** | Yes |
+| The last Windows prdsrv1 | storage `archive` on prx2 (protected, final backup of 2026-09-30) | No (on-site only) |
 | Network (UniFi), DNS (Cloudflare) | their cloud consoles | Yes |
 | Build notes | `agentic-os/07-home-tech` | Yes, if pushed (same repo) |
 
@@ -56,9 +60,16 @@ disconnected, look, then delete it.
 
 ### 3. A host's `data` disk dies (VMs AND their backups are on it)
 
-**Today this loses those VMs.** Their only backups sit on the same disk. The fix is gap G3
-(backups on the other host and offsite); once that exists, this becomes scenario 2 after
-replacing the disk and re-adding the storage (see "Rebuild a host", step 3).
+- **prx1's disk:** its VMs are in the Backup Server on prx2. Replace the disk, re-add the
+  storage ("Rebuild a host", step 3), then restore each VM from storage `pbs`:
+  `qmrestore pbs:backup/vm/<vmid>/<time> <vmid> --storage data`. prx2 alone can hold prdsrv1 or
+  prdsrv2 only with less memory.
+- **prx2's disk:** the Backup Server's datastore, the archive and prdsrv3 go with it. prx1's
+  VMs are fine; rebuild prx2 (`make hosts`, `scripts/pbs-connect.sh --rotate`), prdsrv3 from
+  code (`make up ENV=prod`, `make lxc-bootstrap`, `make configure`, then the stacks and Uptime
+  Kuma's data from a dump or a VM backup still on prx1's `data` while that job runs).
+- **Both:** the Drive copy holds every database and app dump (restore test below); the VMs are
+  rebuilt from code (route 2 of "Prod VMs").
 
 ### 4. A host's boot disk dies (prx1's is the 8-year-old SATA SSD)
 
@@ -146,16 +157,18 @@ make init && make init ENV=prod
 
 ### E. Prod VMs
 
-Two routes; today only route 1 is possible for prdsrv2. prdsrv1 and prdsrv3 are rebuilt
-from Terraform and Ansible (route 2), their app data from backups.
+Two routes. prdsrv1 and prdsrv3 are template-built, so route 2 works for them today; prdsrv2
+is hand-built (route 1, or route 2 into a fresh template VM).
 
-1. **Restore from backup** (needs a surviving backup: gap G3): copy the backup files to the
-   host's `/mnt/pve/data/dump/`, `qmrestore` each one with its original VMID, start them.
-   Then `make plan ENV=prod`: `imports.tf` adopts them, expect 0 changes.
-2. **Rebuild from code** (once gap G4 is closed): Terraform creates prdsrv2 fresh
-   from the template, `make configure ENV=prod` installs baseline, shell and Docker, the
-   `git clone` homelab-apps to `/opt/docker`, `op inject` each `.env`, `docker compose up -d`
-   per app, and the latest database dumps are loaded back in.
+1. **Restore from backup:** `qmrestore` from storage `pbs` (or a `vzdump` file in
+   `/mnt/pve/data/dump/`) with the original VMID, start it. Then `make plan ENV=prod`, expect
+   0 changes.
+2. **Rebuild from code:** `make up ENV=prod`, `make configure ENV=prod` (baseline, shell,
+   Docker, firewall, backup timers), clone homelab-apps to `/opt/docker` with that host's
+   sparse checkout (`hosts/README.md`), `op inject` each `.env` plus the per-host values, then
+   restore data: the dumps from `/opt/backups` or Drive
+   (`sudo rclone copy offsite:daily/<date>/<host> /tmp/restore`, after
+   `homelab-apps/backups/setup-offsite.sh` has written the rclone config), `docker compose up -d`.
 
 Then `make hosts ARGS="--tags startup,backups"`, and check DNS (Pi-hole) and Caddy
 before anything else, because every other service depends on them.
@@ -175,17 +188,16 @@ Done when every host and VM report is clean, `make plan` and `make plan ENV=prod
 | # | Gap | Risk | Fix | Effort |
 |---|---|---|---|---|
 | ~~G1~~ | ~~Repo exists only on the Mac~~ | **Closed 2026-09-25**: pushed to github.com/Tendulkarx/proxmox-lab (private) | Push after every commit | |
-| G3 | Nothing off-site. (Same-disk part closed 2026-09-27: prx1's backups are mirrored to prx2 after each clean run) | Losing both hosts (fire, theft, surge) loses everything | Encrypted rclone upload: database dumps to Google Drive (free); VM backups to a service with room for about 52 GB | an evening |
+| G3 | Tier 1 **closed 2026-09-30**: every database and app dump goes encrypted to Google Drive nightly (restored from it 2026-09-30). Open: tier 2, whole VM backups off-site; and rclone needs its own Google client before the shared one is retired (homelab-apps `backups/offsite.md`) | Losing both hosts means rebuilding the VMs from code before loading the dumps | Phase 9: a paid store for about 50 GB | an evening |
 | ~~G2~~ | ~~prdsrv2's app stacks are not in git~~ | **Closed 2026-09-27**: `/opt/docker` is the repo homelab-apps, images pinned, secrets in 1Password (`op inject -i .env.example -o .env`) | Deploying it with Ansible was dropped: Arcane edits the files in place (decision 54) | |
-| G4 | No database dumps | Can only restore a whole VM, not one database; crash-consistent at best | Nightly `pg_dump`, SQL Server `BACKUP DATABASE`, Oracle `expdp` into a backup folder picked up by the VM backup | an evening |
+| ~~G4~~ | ~~No database dumps~~ | **Closed 2026-09-30**: nightly dumps (homelab-apps `backups/dump.sh`), 14 days, restore tested | | |
 | G5 | Some host config is manual (data storage, fstab, iGPU kernel flags, network) | Rebuild relies on this document being right | Move storage and kernel cmdline into the `pve_host` role | an evening |
 | G6 | `agentic-os` has a GitHub remote, but its last commit was 8 days ago | Recent dotfile and note changes exist only on the Mac | Commit and push it regularly | 5 min |
 | G7 | prdsrv1 (Windows) exists only as a VM and its backup | No rebuild path | **Closed 2026-09-30**: Windows retired (final backup in `archive` on prx2); prdsrv1 is Linux, built from code | done |
-| G8 | Restores have never been tested | You find out at the worst moment | Quarterly drill: restore prdsrv2's backup to VMID 919 with the NIC disconnected, boot it, check the apps' data, delete it | 30 min each quarter |
+| ~~G8~~ | ~~Restores have never been tested~~ | **Closed 2026-09-30**: prdsrv2 restored from the Backup Server twice (29 and 30 Sep, 5 minutes each; every database and app came up, Oracle too on the 30th) and a Postgres dump restored from the Drive copy. Keep the quarterly drill | 30 min each quarter | |
 
-Since 2026-09-27 a failed NVMe on prx1 is survivable (restore from `prx1-copy` on prx2, though
-prx2 has only 7.6 GB RAM, so restore prdsrv2 with less memory). The worst case now is losing
-both hosts at once: G3 (off-site) and G4 (dumps) are the priority.
+Since 2026-09-30 losing either host is survivable, and losing both loses no data (the dumps
+are off-site), only time: the VMs are rebuilt from code. Left: G3 tier 2, G5, G6.
 
 ## Drills
 
@@ -193,5 +205,5 @@ both hosts at once: G3 (off-site) and G4 (dumps) are the priority.
 |---|---|
 | After every major change | `make audit`, `make plan` in both envs shows `No changes` |
 | Monthly | Check the nightly backups exist and are recent: `pvesm list data --content backup` on each host |
-| Quarterly | Restore test (G8); rebuild a lab VM from scratch; confirm 1Password items still work |
+| Quarterly | Restore test: prdsrv2 from `pbs` to VMID 919 on `local-lvm`, `link_down=1` on its NIC, a dummy interface holding 10.69.20.114 inside so the containers bind, check the databases, destroy it; restore one dump from Drive into a scratch database; stop the Pi-hole on prdsrv2 for a minute and check names resolve through prdsrv3; rebuild a lab VM; confirm 1Password items still work |
 | Yearly | Walk through scenario 5 on paper: could you do it with only 1Password and the remote repo? |

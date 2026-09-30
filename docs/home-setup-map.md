@@ -35,10 +35,10 @@ Windows machines only accept SSH and Remote Desktop from these three ranges.
 | Name | What | Address | Set up by |
 |---|---|---|---|
 | prx1 (`prx-server-1`) | Proxmox VE 9, 62 GB RAM, main host | 10.69.20.130 | `ansible/roles/pve_host` (`make hosts`) |
-| prx2 (`prx-server-2`) | Proxmox VE 9, 7.6 GB RAM; template only | 10.69.20.131 | same |
-| prdsrv1 | Ubuntu VM on prx1 (VMID 100): main app host (apps move here in phase 6); Windows until 2026-09-30 | 10.69.20.113 | Terraform prod + Ansible + dotfiles |
-| prdsrv3 | Ubuntu container on prx2 (VMID 102): Uptime Kuma, second Pi-hole | 10.69.20.115 | Terraform prod + Ansible |
-| prdsrv2 | Ubuntu VM on prx1 (VMID 101): every Docker service, Pi-hole, Caddy | 10.69.20.114 | Terraform prod + Ansible + dotfiles |
+| prx2 (`prx-server-2`) | Proxmox VE 9, 7.6 GB RAM: Proxmox Backup Server (datastore `main`, UI on port 8007), storage `archive`, prdsrv3 | 10.69.20.131 | same, plus role `pbs` |
+| prdsrv1 | Ubuntu VM on prx1 (VMID 100): the apps and Caddy (Homepage, Paperless, n8n, Metabase, Dozzle, Arcane); Windows until 2026-09-30 | 10.69.20.113 | Terraform prod + Ansible + dotfiles |
+| prdsrv3 | Ubuntu container on prx2 (VMID 102): Uptime Kuma, second Pi-hole, nebula-sync | 10.69.20.115 | Terraform prod + Ansible |
+| prdsrv2 | Ubuntu VM on prx1 (VMID 101): the database server (Postgres, SQL Server, Oracle), primary Pi-hole, property-search | 10.69.20.114 | Terraform prod + Ansible + dotfiles |
 | tstsrv<N> | Ubuntu lab VMs on prx1 (VMID 899 + N) | 10.69.20.(199 + N) | Terraform lab + Ansible + dotfiles |
 | osbmac1 | Main Mac (personal) | 10.69.10.221 at home (DHCP) | dotfiles `install.sh` |
 | osbmac2 | Second Mac | 10.69.10.214 (DHCP) | dotfiles `install.sh` |
@@ -47,6 +47,17 @@ Windows machines only accept SSH and Remote Desktop from these three ranges.
 Naming: personal machines `osb<os><N>` (mac, win, lnx; highest number + 1, never reused);
 lab VMs `tstsrv<N>` (lowest free N); prod VMs `prdsrv<N>` (VMID 99 + N, IP highest prod IP + 1).
 Rules and checks: `terraform/envs/*/variables.tf`, dotfiles `machines/README.md`.
+
+## Backups and alerts
+
+| What | When | Where |
+|---|---|---|
+| Database and app dumps | 01:30 | `/opt/backups` on prdsrv2 and prdsrv1, 14 days |
+| VM backups, prx1 | 03:30 (`pbs-nightly`) | Proxmox Backup Server on prx2: 7 daily, 4 weekly, 3 monthly, verified Sundays |
+| VM backups, old job (until 2026-10-13) | 02:30, copy 06:00 | `data` on prx1, copy on prx2 |
+| VM backups, prx2 (prdsrv3) | 02:30 | `data` on prx2 |
+| Off-site | 03:00 | Google Drive `homelab-offsite`, encrypted (keys: 1Password `prdsrv2-rclone`), 30 days |
+| Alerts | on warnings and errors | Gmail, from both hosts, the Backup Server and Uptime Kuma (every monitor, and a push monitor per backup job) |
 
 ## Logging in
 

@@ -274,6 +274,21 @@ Status 2026-09-30:
 2. Update `home-setup-map.md`, `disaster-recovery.md` (G3, G4, G8), `runbook.md`,
    `proxmox-review.md`, homelab-apps README, the agentic-os and Obsidian notes; decisions logged.
 
+Status 2026-09-30: done.
+- Drill: prdsrv2's 03:31 Backup Server snapshot restored to VMID 919 (`local-lvm`, NIC unplugged,
+  dummy interface with .114) in 5 minutes. Every container came up, Oracle healthy this time
+  (FREEPDB1, 2,522 tables); Postgres 5 databases, property_search 7,241 listings, Metabase 49
+  cards; SQL Server 4 databases. VM destroyed. The snapshot predates the first dumps, so a dump
+  was restored from the **Drive copy** instead: property_search 7,241 listings and 285,308 sold
+  prices, the same as live.
+- DNS failover: Pi-hole on prdsrv2 stopped for about 30 seconds; prdsrv3 answered internet
+  names, local records and blocked domains, and prdsrv1 kept resolving.
+- `make audit`: SMART healthy on all disks, no failed units. Found and fixed: nebula-sync's 07:00
+  sync failed during the DNS switch (fine since). Open for O'Neil: 82 updates on prdsrv3 (never
+  patched since the template), 8 on each host; prdsrv1 and tstsrv1 wait for a reboot (kernel).
+- Docs: disaster-recovery (G3 tier 1, G4, G8 closed), home-setup-map (roles, backups and alerts
+  table), runbook, proxmox-review (S2 closed); homelab-apps README (phase 6).
+
 ### Phase 9, last: open choices
 
 1. Windows: keep only the archived backup (restore it to a small, normally stopped VM on
