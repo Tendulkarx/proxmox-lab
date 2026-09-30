@@ -136,9 +136,8 @@ Run order (prepared 2026-09-29; homelab-apps PR #9 holds the stacks):
 Status 2026-09-30: steps 1 to 3 done. prdsrv3 runs Pi-hole and nebula-sync (first sync done;
 .114 and .115 give the same answers for local records, internet names and blocked domains),
 156 MB of its 1 GB used. Docker works with `nesting` alone. homelab-apps is cloned with a
-read-only deploy key, on branch `prdsrv3-infra` until PR #9 is merged. Left: step 4 (Uptime
-Kuma), step 5 (UniFi), and the console password (`make configure ENV=prod NAME=prdsrv3
-ARGS="--tags console_password"`, needs Touch ID).
+read-only deploy key and on `main` (PR #9 merged); the console password is set. Left: step 4
+(Uptime Kuma) and step 5 (UniFi).
 
 ### Phase 4: database dumps and off-site tier 1 (free)
 
