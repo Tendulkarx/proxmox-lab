@@ -49,7 +49,8 @@ the difference between the file and Proxmox; `make up` makes Proxmox match.
   - `envs/lab`: disposable test VMs, one line each in `vms.auto.tfvars`. VMID 900-919 maps to
     IP 10.69.20.200-219. Cloned from template 9000, configured by cloud-init (user `turbx`,
     your SSH key, static IP, DNS).
-  - `envs/prod`: prdsrv1 and prdsrv2, **imported** (adopted as they were), not created.
+  - `envs/prod`: prdsrv2 **imported** (adopted as it was); prdsrv1 (VM) and prdsrv3
+    (container) built by Terraform.
     `prevent_destroy` blocks any plan that would delete them; `reboot_after_update = false`
     means hardware changes wait for you to stop and start the VM.
 - **State** (`terraform.tfstate` in each env folder) is Terraform's memory of what it manages.

@@ -9,7 +9,9 @@ source of truth for how things run.
 
 - Hosts: prx1 = `prx-server-1` 10.69.20.130 (62 GB RAM, main host); prx2 = `prx-server-2`
   10.69.20.131 (7.6 GB RAM). Server VLAN 10.69.20.0/24, gateway .1, DNS Pi-hole on prdsrv2.
-- Prod VMs: prdsrv1 (prx1/100, Windows, iGPU passthrough), prdsrv2 (prx1/101, every Docker
+- Prod: prdsrv1 (prx1/100, .113, Ubuntu, main app host, template-built; Windows until
+  2026-09-30, final backup in `archive` on prx2), prdsrv3 (prx2/102, .115, LXC: Uptime Kuma,
+  second Pi-hole), prdsrv2 (prx1/101, every Docker
   service: Caddy, Pi-hole, Postgres, SQL Server, Oracle, Paperless, n8n, Metabase...).
 - prdsrv2's apps: `/opt/docker` is the git repo github.com/Tendulkarx/homelab-apps (private),
   cloned on the Mac at `~/development/homelab-apps`. Pinned image versions; `.env` files are

@@ -1,4 +1,4 @@
-# Production Linux VMs. prdsrv1 (Windows) joins later.
+# Production Linux VMs and containers.
 # Hand-built VMs need the key first: ssh-copy-id -i ~/.ssh/id_ed25519_homelab.pub turbx@<ip>
 # Template-built VMs (terraform/envs/prod/vms.auto.tfvars) have it from cloud-init: add them
 # here with their IP after `make up ENV=prod`.
@@ -6,6 +6,9 @@ all:
   children:
     prod:
       hosts:
+        # Main app host, template-built (terraform/envs/prod/vms.auto.tfvars); Windows until 2026-09-30
+        prdsrv1:
+          ansible_host: 10.69.20.113
         prdsrv2:
           ansible_host: 10.69.20.114
           # Docker was set up by hand: never rewrite daemon.json or restart Docker

@@ -63,5 +63,5 @@ From any folder, `lab <command>` runs the make target here (`lab` alone goes to 
 - A prod VM restart is always your call: `lab restart <vm>` (it asks first). A restart from
   inside the guest does **not** apply hardware changes; `lab status` shows any still pending.
 - The backup disk filling up, or backups growing: `docs/reclaim-disk-space.md`.
-- Windows (prdsrv1): `docs/prdsrv1-windows.md`. Setting up any Windows or Mac machine: the
-  dotfiles README and its troubleshooting section.
+- Setting up any Windows or Mac machine: the dotfiles README and its troubleshooting section.
+  The old Windows prdsrv1 is only a backup now (`archive` on prx2, lab-rebuild-plan phase 5).

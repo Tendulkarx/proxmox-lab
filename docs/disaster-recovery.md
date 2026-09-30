@@ -127,7 +127,8 @@ Home-Tech-Resources/home-network-reference.md`.
      pvesm add dir data --path /mnt/pve/data --is_mountpoint 1 \
        --content images,rootdir,iso,vztmpl,backup,snippets,import --nodes prx-server-1
      ```
-4. **prx1 only: iGPU passthrough for prdsrv1.** Kernel command line must include
+4. **prx1, only if a VM needs the iGPU again** (Windows prdsrv1 used it until 2026-09-30).
+   Kernel command line must include
    `intel_iommu=on iommu=pt i915.enable_guc=3 i915.max_vfs=7`. On a GRUB install: add to
    `GRUB_CMDLINE_LINUX_DEFAULT` in `/etc/default/grub`, `update-grub`; on systemd-boot: add to
    `/etc/kernel/cmdline`, `proxmox-boot-tool refresh`. Reboot and check
@@ -145,7 +146,8 @@ make init && make init ENV=prod
 
 ### E. Prod VMs
 
-Two routes; today only route 1 is possible for prdsrv2 and prdsrv1.
+Two routes; today only route 1 is possible for prdsrv2. prdsrv1 and prdsrv3 are rebuilt
+from Terraform and Ansible (route 2), their app data from backups.
 
 1. **Restore from backup** (needs a surviving backup: gap G3): copy the backup files to the
    host's `/mnt/pve/data/dump/`, `qmrestore` each one with its original VMID, start them.
@@ -178,7 +180,7 @@ Done when every host and VM report is clean, `make plan` and `make plan ENV=prod
 | G4 | No database dumps | Can only restore a whole VM, not one database; crash-consistent at best | Nightly `pg_dump`, SQL Server `BACKUP DATABASE`, Oracle `expdp` into a backup folder picked up by the VM backup | an evening |
 | G5 | Some host config is manual (data storage, fstab, iGPU kernel flags, network) | Rebuild relies on this document being right | Move storage and kernel cmdline into the `pve_host` role | an evening |
 | G6 | `agentic-os` has a GitHub remote, but its last commit was 8 days ago | Recent dotfile and note changes exist only on the Mac | Commit and push it regularly | 5 min |
-| G7 | prdsrv1 (Windows) exists only as a VM and its backup | No rebuild path | Accept (backup only), or document its setup | optional |
+| G7 | prdsrv1 (Windows) exists only as a VM and its backup | No rebuild path | **Closed 2026-09-30**: Windows retired (final backup in `archive` on prx2); prdsrv1 is Linux, built from code | done |
 | G8 | Restores have never been tested | You find out at the worst moment | Quarterly drill: restore prdsrv2's backup to VMID 919 with the NIC disconnected, boot it, check the apps' data, delete it | 30 min each quarter |
 
 Since 2026-09-27 a failed NVMe on prx1 is survivable (restore from `prx1-copy` on prx2, though

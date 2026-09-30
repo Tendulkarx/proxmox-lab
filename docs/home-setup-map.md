@@ -25,8 +25,8 @@ agentic-os `Software-Development-Resources/_archive/`.
 |---|---|---|
 | Server VLAN 20 | 10.69.20.0/24, gateway .1 | Proxmox hosts and every VM |
 | Home network | 10.69.10.0/24 | Laptops and Macs at home |
-| VPN | 10.69.2.0/24 | The Mac appears as 10.69.2.2 when away (interface `utun10`); only the addresses it knows are routed, see the prdsrv1 `.113` open item |
-| DNS | Pi-hole on prdsrv2 (10.69.20.114), fallback the gateway | Search domain `home.arpa` |
+| VPN | 10.69.2.0/24 | The Mac appears as 10.69.2.2 when away (interface `utun10`); only the addresses it knows are routed: .113 and .115 must be allowed there (UniFi) |
+| DNS | Pi-hole on prdsrv2 (10.69.20.114), second on prdsrv3 (.115, kept in step by nebula-sync) | Search domain `home.arpa` |
 
 Windows machines only accept SSH and Remote Desktop from these three ranges.
 
@@ -36,7 +36,8 @@ Windows machines only accept SSH and Remote Desktop from these three ranges.
 |---|---|---|---|
 | prx1 (`prx-server-1`) | Proxmox VE 9, 62 GB RAM, main host | 10.69.20.130 | `ansible/roles/pve_host` (`make hosts`) |
 | prx2 (`prx-server-2`) | Proxmox VE 9, 7.6 GB RAM; template only | 10.69.20.131 | same |
-| prdsrv1 | Windows 11 VM on prx1 (VMID 100): Remote Desktop PC, iGPU passthrough (not working yet) | 10.69.20.69 (DHCP; moving to .113) | `scripts/windows/prdsrv1-*.ps1` + dotfiles `install.ps1` |
+| prdsrv1 | Ubuntu VM on prx1 (VMID 100): main app host (apps move here in phase 6); Windows until 2026-09-30 | 10.69.20.113 | Terraform prod + Ansible + dotfiles |
+| prdsrv3 | Ubuntu container on prx2 (VMID 102): Uptime Kuma, second Pi-hole | 10.69.20.115 | Terraform prod + Ansible |
 | prdsrv2 | Ubuntu VM on prx1 (VMID 101): every Docker service, Pi-hole, Caddy | 10.69.20.114 | Terraform prod + Ansible + dotfiles |
 | tstsrv<N> | Ubuntu lab VMs on prx1 (VMID 899 + N) | 10.69.20.(199 + N) | Terraform lab + Ansible + dotfiles |
 | osbmac1 | Main Mac (personal) | 10.69.10.221 at home (DHCP) | dotfiles `install.sh` |

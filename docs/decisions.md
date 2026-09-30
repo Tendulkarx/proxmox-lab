@@ -82,6 +82,7 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 66 | prdsrv3 is an unprivileged container with only `nesting` on; a one-off root play (`make lxc-bootstrap`) makes turbx | nesting is the only feature flag the Terraform token may set, and Docker runs without keyctl; containers have no cloud-init, so the admin user is made over root's Terraform key, which vm_baseline then shuts off |
 | 67 | Alerts by email through the Gmail app password (Proxmox, Backup Server, Uptime Kuma), warnings and errors only | O'Neil's choice; one login already in 1Password; a send-only provider can replace it later in one place |
 | 68 | Database dumps at 01:30 into `/opt/backups` (14 days), off-site at 03:00 by rclone crypt to Drive with the `drive.file` scope (30 days) | Dumps land inside the 02:30 VM backup too; crypt means Google holds only ciphertext; drive.file limits rclone to its own files; the keys live only in 1Password |
+| 69 | The Windows prdsrv1 left Terraform through a `removed` block (`destroy = false`) and was deleted with `qm destroy` after its archive passed `zstd -t`; the Linux prdsrv1 reuses VMID 100 from the template | One apply can't destroy and recreate the same VMID in order; forgetting first keeps the plan honest (no surprise destroy), and the delete happened only once the archive was proven |
 
 ## Open items
 

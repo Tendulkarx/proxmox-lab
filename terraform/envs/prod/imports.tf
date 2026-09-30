@@ -8,12 +8,6 @@
 # before anything is applied.
 
 import {
-  to       = proxmox_virtual_environment_vm.prdsrv1
-  id       = "prx-server-1/100"
-  provider = proxmox.prx1
-}
-
-import {
   to       = proxmox_virtual_environment_vm.prdsrv2
   id       = "prx-server-1/101"
   provider = proxmox.prx1

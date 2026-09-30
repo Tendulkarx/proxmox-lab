@@ -36,19 +36,19 @@ variable "prod_vms" {
     error_message = "Prod VMs are named prdsrv<N> with VMID 99 + N: prdsrv3 = 102, prdsrv4 = 103, and so on. Use the lowest free number."
   }
 
-  # prdsrv1 (100) and prdsrv2 (101) are the hand-built VMs imported in prod.tf.
+  # prdsrv2 (101) is the hand-built VM imported in prod.tf; 102 is prdsrv3 in containers.tf.
   validation {
-    condition     = alltrue([for v in values(var.prod_vms) : v.vmid >= 102 && v.vmid <= 199])
-    error_message = "Prod VMIDs for new VMs are 102-199 (100 and 101 are prdsrv1 and prdsrv2 in prod.tf)."
+    condition     = alltrue([for v in values(var.prod_vms) : contains([100], v.vmid) || (v.vmid >= 103 && v.vmid <= 199)])
+    error_message = "Prod VMIDs are 100 (prdsrv1) or 103-199 (101 is prdsrv2 in prod.tf, 102 is prdsrv3 in containers.tf)."
   }
 
   validation {
     condition = alltrue([for v in values(var.prod_vms) :
       can(regex("^10\\.69\\.20\\.([0-9]{1,3})$", v.ip)) &&
-      !contains(["1", "69", "114", "130", "131"], split(".", v.ip)[3]) &&
+      !contains(["1", "114", "115", "130", "131"], split(".", v.ip)[3]) &&
       !(tonumber(split(".", v.ip)[3]) >= 200 && tonumber(split(".", v.ip)[3]) <= 219)
     ])
-    error_message = "ip must be 10.69.20.x, not the gateway (.1), prdsrv1 (.69), prdsrv2 (.114), the hosts (.130/.131) or the lab range (.200-.219)."
+    error_message = "ip must be 10.69.20.x, not the gateway (.1), prdsrv2 (.114), prdsrv3 (.115), the hosts (.130/.131) or the lab range (.200-.219)."
   }
 
   validation {

@@ -192,6 +192,21 @@ notification, on all 15 monitors.
 Check: `make plan ENV=prod` empty after apply; `ssh prdsrv1` works; audit clean.
 Undo: restore the archived Windows backup to VMID 100 (the Terraform change is reverted too).
 
+Status 2026-09-30: done, except the items for O'Neil below.
+- Windows shut down cleanly; final backup taken stopped (37.6 GB, 2 min), protected on prx1,
+  hard-linked into `archive` on prx2 and protected there; `zstd -t` passed. VM 100 then
+  removed with `qm destroy` (Terraform `removed` block with `destroy = false`, so the plan
+  only forgets it). The 29 Sep interim copy stays in `archive` too.
+- New prdsrv1: VM 100 from template 9000, 6 cores, 24 GB, 200 GB, 10.69.20.113, DNS both
+  Pi-holes; start order 2; baseline, shell (machine profile `prdsrv`, `KIND=server`) and
+  Docker; a second `make configure` changes nothing.
+- Retired: `scripts/windows/`, `docs/prdsrv1-windows.md`, dotfiles `machines/prdsrv1` (it
+  gave the new Linux VM the Windows desktop profile) and the .69 SSH entry.
+- Moved to phase 6, where the rules matter: UFW, the Uptime Kuma monitor and Homepage tile.
+- O'Neil: console password (`make configure ENV=prod NAME=prdsrv1 ARGS="--tags
+  console_password"`), `make plan ENV=prod` expected empty, a restart for the new kernel
+  (nothing runs there yet), and in UniFi a DNS record prdsrv1 = .113 and .113/.115 on the VPN.
+
 ### Phase 6: move the apps from prdsrv2 to prdsrv1
 
 homelab-apps gains one folder per host (or a host list per stack) so each host checks out only

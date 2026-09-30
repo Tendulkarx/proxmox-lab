@@ -1,4 +1,4 @@
-# Production VMs, adopted from Proxmox with `import` blocks (imports.tf).
+# prdsrv2, adopted from Proxmox with an `import` block (imports.tf).
 #
 # Rules for this file:
 #   * Values mirror what Proxmox reported on 2026-09-22 (generated.tf.orig), so the first plan
@@ -12,93 +12,16 @@
 #     EFI/TPM disks, passthrough), so Terraform never tries to "correct" it.
 
 # ---------------------------------------------------------------------------------------
-# prdsrv1: Windows Server, iGPU passthrough (prx-server-1, VMID 100)
+# prdsrv1 (VMID 100) was Windows 11 until 2026-09-30. Its final backup is kept in storage
+# `archive` on prx2 (lab-rebuild-plan phase 5; restore it to go back). Terraform forgets the
+# old VM rather than destroying it: it was removed on prx1 by hand after the archive was
+# checked. The Linux prdsrv1 is template-built: vms.auto.tfvars.
 # ---------------------------------------------------------------------------------------
-resource "proxmox_virtual_environment_vm" "prdsrv1" {
-  provider  = proxmox.prx1
-  name      = "prdsrv1"
-  node_name = "prx-server-1"
-  vm_id     = 100
-  tags      = ["prod", "terraform", "windows"]
-
-  bios          = "ovmf"
-  machine       = "pc-q35-9.0"
-  boot_order    = ["scsi0", "ide0", "ide2", "net0"]
-  scsi_hardware = "virtio-scsi-single"
-  on_boot       = true
-  started       = true
-
-
-  reboot_after_update = false
-  stop_on_destroy     = false
-
-  agent {
-    enabled = true
-    timeout = "15m"
-  }
-
-  cpu {
-    cores   = 6
-    sockets = 1
-    type    = "host"
-  }
-
-  memory {
-    dedicated = 16384
-  }
-
-  disk {
-    datastore_id = "data"
-    interface    = "scsi0"
-    file_format  = "qcow2"
-    size         = 128
-    iothread     = true
-    # 2026-09-24: was discard "ignore": Windows' freed space never reached prx1, so the
-    # image grew to 121 of 128 GB (41 GB used) and backups were 130 GB until one failed
-    # for lack of room. discard + ssd let Windows TRIM hand the space back.
-    discard      = "on"
-    ssd          = true
-  }
-
-  efi_disk {
-    datastore_id      = "data"
-    file_format       = "qcow2"
-    type              = "4m"
-    pre_enrolled_keys = true
-  }
-
-  tpm_state {
-    datastore_id = "data"
-    version      = "v2.0"
-  }
-
-  hostpci {
-    device = "hostpci0"
-    id     = "0000:00:02"
-    pcie   = true
-    rombar = true
-    xvga   = false
-  }
-
-  network_device {
-    bridge      = "vmbr0"
-    model       = "virtio"
-    mac_address = "BC:24:11:A7:26:2E"
-    firewall    = true
-  }
-
-  operating_system {
-    type = "win11"
-  }
-
-  vga {
-    type   = "virtio"
-    memory = 16
-  }
+removed {
+  from = proxmox_virtual_environment_vm.prdsrv1
 
   lifecycle {
-    prevent_destroy = true
-    ignore_changes  = [cdrom, efi_disk, tpm_state, hostpci, description, startup]
+    destroy = false
   }
 }
 
