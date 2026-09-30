@@ -16,7 +16,8 @@ cannot be recovered today and the order to close it.**
 | Dotfiles | `~/development/dotfiles` | Yes, if pushed: github.com/Tendulkarx/dotfiles (private) |
 | App stacks (`/opt/docker/*` on prdsrv1, prdsrv2, prdsrv3) | github.com/Tendulkarx/homelab-apps (private; each host has a sparse checkout of its folders, `hosts/<host>`). `.env` values in 1Password as `prdsrv2-<app>`, plus the per-host values in its README | Yes |
 | VM backups | prx1: Proxmox Backup Server on prx2 (`pbs-nightly` 03:30, 7 daily, 4 weekly, 3 monthly, verified weekly; the only job on prx1 since 2026-09-30). prx2 (prdsrv3): `nightly` 02:30 to its own `data` (keep 2). prx1's `data` holds no backups any more (the last old files were deleted 2026-09-30) | Survives prx1 entirely; not off-site (tier 2, phase 9) |
-| Database and app dumps | `/opt/backups/<date>` on prdsrv2 (Postgres, SQL Server, Oracle) and prdsrv1 (n8n, Paperless), 01:30, 14 days; inside the VM backups too | Yes: encrypted copy in Google Drive `homelab-offsite/daily/<date>/<host>`, 30 days (03:00) |
+| Database and app dumps | `/opt/backups/<date>` on prdsrv2 (Postgres, SQL Server, Oracle) and prdsrv1 (n8n, Paperless, Homarr), 01:30, 14 days; inside the VM backups too | Yes: encrypted copy in Google Drive `homelab-offsite/daily/<date>/<host>`, 30 days (03:00) |
+| prdsrv3's app data (Uptime Kuma's monitors, the Beszel hub's history, fingerprints and key) | Only in prdsrv3's nightly backup on prx2's own `data` (keep 2); no dump, no off-site copy (gap G9) | No |
 | Off-site keys (rclone crypt, Drive login) | 1Password `prdsrv2-rclone`: **the only way to read the Drive copies** | Yes |
 | The last Windows prdsrv1 | storage `archive` on prx2 (protected, final backup of 2026-09-30) | No (on-site only) |
 | Network (UniFi), DNS (Cloudflare) | their cloud consoles | Yes |
@@ -66,8 +67,9 @@ disconnected, look, then delete it.
   prdsrv2 only with less memory.
 - **prx2's disk:** the Backup Server's datastore, the archive and prdsrv3 go with it. prx1's
   VMs are fine; rebuild prx2 (`make hosts`, `scripts/pbs-connect.sh --rotate`), prdsrv3 from
-  code (`make up ENV=prod`, `make lxc-bootstrap`, `make configure`, then the stacks and Uptime
-  Kuma's data from a dump or a VM backup still on prx1's `data` while that job runs).
+  code (`make up ENV=prod`, `make lxc-bootstrap`, `make configure`, then the stacks). Uptime
+  Kuma's monitors and Beszel's history go with the disk (gap G9): set the monitors up again by
+  hand, and register the Beszel agents with the new hub (homelab-apps README, "Secrets").
 - **Both:** the Drive copy holds every database and app dump (restore test below); the VMs are
   rebuilt from code (route 2 of "Prod VMs").
 
@@ -169,6 +171,8 @@ is hand-built (route 1, or route 2 into a fresh template VM).
    restore data: the dumps from `/opt/backups` or Drive
    (`sudo rclone copy offsite:daily/<date>/<host> /tmp/restore`, after
    `homelab-apps/backups/setup-offsite.sh` has written the rclone config), `docker compose up -d`.
+   A rebuilt VM's Beszel agent has a new fingerprint, so the hub refuses it until it registers
+   again (homelab-apps README, "Secrets"); Homarr's board scripts are in `homarr/theme/README.md`.
 
 Then `make hosts ARGS="--tags startup,backups"`, and check DNS (Pi-hole) and Caddy
 before anything else, because every other service depends on them.
@@ -195,9 +199,10 @@ Done when every host and VM report is clean, `make plan` and `make plan ENV=prod
 | G6 | `agentic-os` has a GitHub remote, but its last commit was 8 days ago | Recent dotfile and note changes exist only on the Mac | Commit and push it regularly | 5 min |
 | G7 | prdsrv1 (Windows) exists only as a VM and its backup | No rebuild path | **Closed 2026-09-30**: Windows retired (final backup in `archive` on prx2); prdsrv1 is Linux, built from code | done |
 | ~~G8~~ | ~~Restores have never been tested~~ | **Closed 2026-09-30**: prdsrv2 restored from the Backup Server twice (29 and 30 Sep, 5 minutes each; every database and app came up, Oracle too on the 30th) and a Postgres dump restored from the Drive copy. Keep the quarterly drill | 30 min each quarter | |
+| G9 | prdsrv3's app data (Uptime Kuma's monitors, Beszel's history and hub key) is not dumped and not off-site; its only copy is prdsrv3's backup on prx2's own disk, although decision 64 counts Uptime Kuma in tier 1 | Losing prx2's disk loses every monitor and all resource history, and every Beszel agent must register again | Run homelab-apps `backups/` on prdsrv3 too (`db_backups: true`, a dump part for `uptime-kuma/data` and `beszel/data`) | an hour |
 
 Since 2026-09-30 losing either host is survivable, and losing both loses no data (the dumps
-are off-site), only time: the VMs are rebuilt from code. Left: G3 tier 2, G5, G6.
+are off-site), only time: the VMs are rebuilt from code. Left: G3 tier 2, G5, G6, G9.
 
 ## Drills
 
