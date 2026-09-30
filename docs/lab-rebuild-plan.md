@@ -156,8 +156,10 @@ downtime for every site), not `caddy reload`.
 
 Check: restore one dump into a scratch database; list the remote. Undo: remove the timers.
 
-Status 2026-09-30: step 1 done; steps 2 and 3 wait for `homelab-apps/backups/setup-offsite.sh`
-(O'Neil, once: Google sign-in in a browser, keys into 1Password).
+Status 2026-09-30: phase 4 done. The first off-site copy (12 files, 26 MB) passed
+`rclone cryptcheck` against the local dumps; the keys are in 1Password `prdsrv2-rclone`. Open:
+rclone's shared Google client is retired during 2026, so an own OAuth client is needed
+(`homelab-apps/backups/offsite.md`, O'Neil in the Google Cloud console).
 - `homelab-apps/backups/dump.sh`, timer `db-dumps` at 01:30 (role `db_backups`): every Postgres
   database plus roles, SQL Server master/model/msdb (it has no user databases), Oracle FREEPDB1
   full Data Pump export, n8n's SQLite database and key, Paperless's exporter. 36 MB a night,
@@ -169,8 +171,9 @@ Status 2026-09-30: step 1 done; steps 2 and 3 wait for `homelab-apps/backups/set
   in `/etc/default/db-backups` on prdsrv2.
 - Not covered off-site yet: Uptime Kuma's own data (on prdsrv3; in prx2's nightly backup).
 
-Alerts (phase 2 step 5): `scripts/gmail-alerts.sh` (O'Neil, Touch ID) adds a Gmail target on
-both hosts and the Backup Server, and the first notification Uptime Kuma has ever had.
+Alerts (phase 2 step 5): done by `scripts/gmail-alerts.sh`: Gmail target and warnings/errors
+matcher on both hosts and the Backup Server (test emails sent), and Uptime Kuma's first
+notification, on all 15 monitors.
 
 ### Phase 5: replace Windows prdsrv1 with Linux (Windows goes away)
 
