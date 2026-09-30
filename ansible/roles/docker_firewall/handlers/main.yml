@@ -1,0 +1,6 @@
+---
+- name: Apply Docker port rules
+  ansible.builtin.systemd:
+    name: docker-user-firewall.service
+    state: restarted
+    daemon_reload: true

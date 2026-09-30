@@ -1,0 +1,36 @@
+---
+- name: Rules script
+  ansible.builtin.template:
+    src: docker-user-firewall.sh.j2
+    dest: /usr/local/sbin/docker-user-firewall
+    mode: "0755"
+  vars:
+    docker_firewall_interface: "{{ ansible_default_ipv4.interface }}"
+  notify: Apply Docker port rules
+
+- name: Service that applies them after Docker starts
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/docker-user-firewall.service
+    mode: "0644"
+    content: |
+      # Managed by Ansible (proxmox-lab, role docker_firewall)
+      [Unit]
+      Description=Limit sources for Docker-published ports (DOCKER-USER)
+      After=docker.service
+      PartOf=docker.service
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=true
+      ExecStart=/usr/local/sbin/docker-user-firewall
+
+      [Install]
+      WantedBy=multi-user.target docker.service
+  notify: Apply Docker port rules
+
+- name: Service enabled
+  ansible.builtin.systemd:
+    name: docker-user-firewall.service
+    enabled: true
+    daemon_reload: true
+  ignore_errors: "{{ ansible_check_mode }}"  # the unit does not exist yet in a dry run

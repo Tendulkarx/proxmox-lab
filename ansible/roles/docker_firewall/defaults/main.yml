@@ -1,0 +1,6 @@
+---
+# Limits who may reach ports that Docker publishes on this host. Docker's own iptables rules
+# run before UFW, so UFW cannot do this; Docker's DOCKER-USER chain is the supported place.
+# Each entry: port (as published on the host), proto, allow (sources); anything else arriving
+# on the host's LAN interface for that port is dropped. Ports not listed stay open.
+docker_firewall_ports: []

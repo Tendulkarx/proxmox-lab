@@ -10,4 +10,5 @@
     - { role: shell, tags: [shell] }
     - { role: docker, tags: [docker] }
     - { role: firewall, tags: [firewall], when: ansible_virtualization_type != 'lxc' }
+    - { role: docker_firewall, tags: [docker_firewall], when: docker_firewall_ports is defined }
     - { role: db_backups, tags: [db_backups], when: db_backups | default(false) }

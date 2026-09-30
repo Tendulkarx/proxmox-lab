@@ -262,8 +262,7 @@ Status 2026-09-30:
 - Role `firewall` (UFW, prdsrv1 and prdsrv2): only SSH is a host service; Docker-published
   ports bypass UFW, so they are not listed. prdsrv1 now has UFW on; prdsrv2 lost its 80/443
   and DNS rules (left from Caddy, or ignored by Docker). Not on prdsrv3 (container).
-- Follow-up, not done: limit the database ports on prdsrv2 to prdsrv1, prdsrv3 and the Mac. That
-  needs rules in Docker's DOCKER-USER chain, not UFW.
+- Database ports on prdsrv2 limited (done in phase 9, decision 73): role `docker_firewall`.
 - tstsrv1 (VMID 900, 10.69.20.200; 2 cores, 4 GB, 40 GB on `local-lvm`): built and configured
   (baseline, shell, Docker, UFW). Phase 7 done.
 

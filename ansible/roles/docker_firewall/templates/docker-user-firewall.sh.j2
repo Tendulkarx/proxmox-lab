@@ -1,0 +1,15 @@
+#!/bin/sh
+# Managed by Ansible (proxmox-lab, role docker_firewall). Rebuilds the DOCKER-USER chain:
+# for each listed port published on {{ ansible_host }}, only the listed sources get through.
+# Run by docker-user-firewall.service after Docker (again whenever Docker restarts).
+set -eu
+iptables -N DOCKER-USER 2>/dev/null || true
+iptables -F DOCKER-USER
+{% for p in docker_firewall_ports %}
+# {{ p.comment | default(p.port) }}
+{% for src in p.allow %}
+iptables -A DOCKER-USER -i {{ docker_firewall_interface }} -p {{ p.proto | default('tcp') }} -m conntrack --ctorigdst {{ ansible_host }} --ctorigdstport {{ p.port }} -s {{ src }} -j RETURN
+{% endfor %}
+iptables -A DOCKER-USER -i {{ docker_firewall_interface }} -p {{ p.proto | default('tcp') }} -m conntrack --ctorigdst {{ ansible_host }} --ctorigdstport {{ p.port }} -j DROP
+{% endfor %}
+iptables -A DOCKER-USER -j RETURN
