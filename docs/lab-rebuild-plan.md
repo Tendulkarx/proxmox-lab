@@ -264,8 +264,8 @@ Status 2026-09-30:
   and DNS rules (left from Caddy, or ignored by Docker). Not on prdsrv3 (container).
 - Follow-up, not done: limit the database ports on prdsrv2 to prdsrv1, prdsrv3 and the Mac. That
   needs rules in Docker's DOCKER-USER chain, not UFW.
-- tstsrv1 in `terraform/envs/lab/vms.auto.tfvars` (2 cores, 4 GB, 40 GB on `local-lvm`):
-  O'Neil runs `make up`, then `make configure ENV=lab`.
+- tstsrv1 (VMID 900, 10.69.20.200; 2 cores, 4 GB, 40 GB on `local-lvm`): built and configured
+  (baseline, shell, Docker, UFW). Phase 7 done.
 
 ### Phase 8: prove it and write it down
 
