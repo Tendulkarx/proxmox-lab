@@ -174,7 +174,8 @@ Source: `make audit`. prdsrv3 is retired and test1 is now tstsrv1, so `audit/vm-
 
 - **B1:** prx1's backups are mirrored to prx2 at 06:00 (`pve-backup-copy`), only when the last
   nightly run logged no errors. First copy 00:11: 19 files, checksums match; prx2 shows them as
-  storage `prx1-copy`. `make audit` reports the copy's last run.
+  storage `prx1-copy`. `make audit` reports the copy's last run. **Retired 2026-09-30**: replaced by
+  the Backup Server on prx2 (lab-rebuild-plan phase 9).
 - **B4:** template 9000 excluded from the nightly job. Its two old backups per host stay until deleted.
 - **B5:** prdsrv3's final backup deleted from prx2.
 - tstsrv1 destroyed; no lab VMs.

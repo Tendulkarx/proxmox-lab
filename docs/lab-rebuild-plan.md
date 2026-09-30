@@ -102,7 +102,7 @@ Status 2026-09-29: steps 1 to 4 done; step 5 (alerts) open.
   ORA-00600 [ksipc: no private ips avail for use]: it needs a real network interface, which the
   unplugged test VM does not have, so it says nothing about the backup. VM 919 destroyed.
 - 4: done as a second job, `pbs-nightly` at 03:30 (all VMs, same exclusions, retention on the
-  Backup Server), not a switch. `nightly` to `data` and the 06:00 copy stay until 2026-10-13;
+  Backup Server), not a switch. `nightly` to `data` and the 06:00 copy were to stay until 2026-10-13 (retired early, 2026-09-30, see phase 9);
   then remove them and the prx1 mirror on prx2.
 
 ### Phase 3: prdsrv3 infra container on prx2
@@ -321,7 +321,10 @@ Left, all O'Neil's:
 - ~~Rotate the Gmail app password~~: done 2026-09-30 (new app password, `gmail-alerts.sh --update`,
   every sender checked, old one revoked). The Google Sheet key was rotated by O'Neil on 2026-09-28/29
   (Sheet access checked 2026-09-30).
-- From 2026-10-13: retire the old `nightly` job to `data` and its 06:00 copy (pve_host:
+- ~~From 2026-10-13: retire the old `nightly` job~~ Done early on 2026-09-30 (O'Neil's call), after
+  every Backup Server task was OK and a full verify read all 67 GB back with 0 errors: PR #1 merged,
+  `nightly` removed on prx1, the copy (timer, keys, storage, 176 GB folder) removed; prx2's disk
+  27% to 16.5%. The archive kept both Windows backups (hard links). Was: retire the old `nightly` job to `data` and its 06:00 copy (pve_host:
   unset `pve_backup_copy_to`, move `nightly` off prx1), after checking two weeks of
   `pbs-nightly` and verify results.
 

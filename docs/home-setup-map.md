@@ -53,8 +53,7 @@ Rules and checks: `terraform/envs/*/variables.tf`, dotfiles `machines/README.md`
 | What | When | Where |
 |---|---|---|
 | Database and app dumps | 01:30 | `/opt/backups` on prdsrv2 and prdsrv1, 14 days |
-| VM backups, prx1 | 03:30 (`pbs-nightly`) | Proxmox Backup Server on prx2: 7 daily, 4 weekly, 3 monthly, verified Sundays |
-| VM backups, old job (until 2026-10-13) | 02:30, copy 06:00 | `data` on prx1, copy on prx2 |
+| VM backups, prx1 (the only job since 2026-09-30) | 03:30 (`pbs-nightly`) | Proxmox Backup Server on prx2: 7 daily, 4 weekly, 3 monthly, verified Sundays |
 | VM backups, prx2 (prdsrv3) | 02:30 | `data` on prx2 |
 | Off-site | 03:00 | Google Drive `homelab-offsite`, encrypted (keys: 1Password `prdsrv2-rclone`), 30 days |
 | Alerts | on warnings and errors | Gmail, to `user+homelab@example.com` (Gmail filter on that address → label `Homelab`), from both hosts, the Backup Server and Uptime Kuma (every monitor, and a push monitor per backup job) |
