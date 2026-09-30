@@ -11,6 +11,13 @@ all:
           ansible_host: 10.69.20.113
           # Nightly backup of n8n and Paperless (roles/db_backups, homelab-apps backups/)
           db_backups: true
+          # Containers here reach Caddy on this host's own address (Homarr's integrations and up/down
+          # checks use the public names, which point here). Docker's networks only; the LAN reaches
+          # 80/443 through Docker's own published ports regardless of UFW.
+          firewall_allow:
+            - { port: "22", proto: tcp, comment: "SSH (key only)" }
+            - { port: "80", proto: tcp, from: 172.16.0.0/12, comment: "Caddy, from containers on this host" }
+            - { port: "443", proto: tcp, from: 172.16.0.0/12, comment: "Caddy, from containers on this host" }
         prdsrv2:
           ansible_host: 10.69.20.114
           # Docker was set up by hand: never rewrite daemon.json or restart Docker
