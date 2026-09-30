@@ -302,6 +302,26 @@ Status 2026-09-30: done.
 3. Optional: a small separate device (a Raspberry Pi or an old laptop) for the second Pi-hole
    and Uptime Kuma, so they survive both hosts being down.
 
+Status 2026-09-30 (O'Neil's choices):
+1. Windows: **archive only**. The final backup stays protected in `archive` on prx2; restore it
+   to a small stopped VM only if something is ever needed from it.
+2. Tier 2: **not now**. Checked 2026-09-30: Backblaze B2 $6.95 per TB a month (about $0.35 for
+   50 GB); Hetzner Storage Box BX11 €3.20 a month for 1 TB. When wanted, B2 is the better fit:
+   Backup Server 4.2 has stable S3 datastores and push sync jobs that encrypt before upload.
+3. Extra device: **not now**; prdsrv3 already outlives prdsrv2 and prx1.
+
+Also done in phase 9: database ports limited (role `docker_firewall`, decision 73);
+`scripts/gmail-alerts.sh --update` for the password rotation.
+
+Left, all O'Neil's:
+- Own Google OAuth client for the Drive copy before rclone's shared one is retired
+  (homelab-apps `backups/offsite.md`), then `setup-offsite.sh --reauth`.
+- Rotate the Gmail app password (then `scripts/gmail-alerts.sh --update`; property-search reads
+  1Password each run) and the Google key flagged earlier. Both were in the Windows `.env`.
+- From 2026-10-13: retire the old `nightly` job to `data` and its 06:00 copy (pve_host:
+  unset `pve_backup_copy_to`, move `nightly` off prx1), after checking two weeks of
+  `pbs-nightly` and verify results.
+
 ## Risks
 
 | Risk | Mitigation |

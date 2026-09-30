@@ -87,6 +87,7 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 71 | Apps on prdsrv1 keep the hostname `postgres`, mapped to 10.69.20.114 with `extra_hosts` | No connection string or 1Password secret had to change, and moving Postgres later is one line per stack |
 | 72 | Dozzle agents use a certificate made for the lab, not Dozzle's built-in one | The built-in pair is public, so anyone reaching port 7007 could read logs and run commands in containers |
 | 73 | Database ports on prdsrv2 only for prdsrv1, prdsrv3, the home network and the VPN; Pi-hole's page and the Dozzle agent only for prdsrv1; DNS open. Enforced in Docker's DOCKER-USER chain (role `docker_firewall`), re-applied after every Docker start | Docker-published ports skip UFW; a lab VM or any other device on the server VLAN no longer reaches the databases at all, instead of only facing a password |
+| 74 | Phase 9: Windows kept as the archived backup only; no tier 2 off-site yet (B2 via a PBS S3 datastore when wanted); no extra device for DNS and monitoring | O'Neil's choices 2026-09-30: every database and app dump is already off-site, so losing both hosts costs rebuild time, not data |
 
 ## Open items
 
