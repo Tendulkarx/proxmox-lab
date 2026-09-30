@@ -31,6 +31,7 @@
     remote_src: true
     include: [beszel-agent]
     mode: "0755"
+  ignore_errors: "{{ ansible_check_mode }}"  # in a dry run nothing is downloaded yet
   notify: Restart beszel-agent
   tags: [beszel]
 
@@ -87,4 +88,5 @@
     enabled: true
     state: started
     daemon_reload: true
+  ignore_errors: "{{ ansible_check_mode }}"  # in a dry run the service file is only "would be" written
   tags: [beszel]

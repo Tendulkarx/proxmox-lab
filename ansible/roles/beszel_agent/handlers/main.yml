@@ -4,3 +4,4 @@
     name: beszel-agent
     state: restarted
     daemon_reload: true
+  ignore_errors: "{{ ansible_check_mode }}"  # in a dry run the service does not exist yet
