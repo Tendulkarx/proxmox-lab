@@ -171,7 +171,8 @@ rclone's shared Google client is retired during 2026, so an own OAuth client is 
   in `/etc/default/db-backups` on prdsrv2.
 - Not covered off-site yet: Uptime Kuma's own data (on prdsrv3; in prx2's nightly backup).
 
-Alerts (phase 2 step 5): done by `scripts/gmail-alerts.sh`: Gmail target and warnings/errors
+Alerts (phase 2 step 5): done by `scripts/gmail-alerts.sh`, all sent to `user+homelab@example.com` so one
+Gmail filter labels them (`Homelab`, confirmed working 2026-09-30): Gmail target and warnings/errors
 matcher on both hosts and the Backup Server (test emails sent), and Uptime Kuma's first
 notification, on all 15 monitors.
 

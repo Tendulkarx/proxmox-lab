@@ -57,7 +57,7 @@ Rules and checks: `terraform/envs/*/variables.tf`, dotfiles `machines/README.md`
 | VM backups, old job (until 2026-10-13) | 02:30, copy 06:00 | `data` on prx1, copy on prx2 |
 | VM backups, prx2 (prdsrv3) | 02:30 | `data` on prx2 |
 | Off-site | 03:00 | Google Drive `homelab-offsite`, encrypted (keys: 1Password `prdsrv2-rclone`), 30 days |
-| Alerts | on warnings and errors | Gmail, from both hosts, the Backup Server and Uptime Kuma (every monitor, and a push monitor per backup job) |
+| Alerts | on warnings and errors | Gmail, to `user+homelab@example.com` (Gmail filter on that address → label `Homelab`), from both hosts, the Backup Server and Uptime Kuma (every monitor, and a push monitor per backup job) |
 
 ## Logging in
 
