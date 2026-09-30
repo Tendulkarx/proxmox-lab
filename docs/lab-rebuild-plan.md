@@ -284,8 +284,12 @@ Status 2026-09-30: done.
 - DNS failover: Pi-hole on prdsrv2 stopped for about 30 seconds; prdsrv3 answered internet
   names, local records and blocked domains, and prdsrv1 kept resolving.
 - `make audit`: SMART healthy on all disks, no failed units. Found and fixed: nebula-sync's 07:00
-  sync failed during the DNS switch (fine since). Open for O'Neil: 82 updates on prdsrv3 (never
-  patched since the template), 8 on each host; prdsrv1 and tstsrv1 wait for a reboot (kernel).
+  sync failed during the DNS switch (fine since). Then, at O'Neil's request: prdsrv3 patched (82
+  updates, backup first) and rebooted; prdsrv1 backed up to the Backup Server and rebooted onto
+  its new kernel (`make patch`); tstsrv1 likewise; n8n given `N8N_PROXY_HOPS=1`. The hosts need
+  no reboot (running their newest kernel); their 8 updates are Proxmox management packages.
+  After: all ten sites and 14 of 14 active monitors up. The 08:00 property-search run, the
+  first started by n8n on prdsrv1, finished `ok` (1,330 listings, 1 new, emailed).
 - Docs: disaster-recovery (G3 tier 1, G4, G8 closed), home-setup-map (roles, backups and alerts
   table), runbook, proxmox-review (S2 closed); homelab-apps README (phase 6).
 
