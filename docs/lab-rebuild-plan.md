@@ -203,9 +203,9 @@ Status 2026-09-30: done, except the items for O'Neil below.
 - Retired: `scripts/windows/`, `docs/prdsrv1-windows.md`, dotfiles `machines/prdsrv1` (it
   gave the new Linux VM the Windows desktop profile) and the .69 SSH entry.
 - Moved to phase 6, where the rules matter: UFW, the Uptime Kuma monitor and Homepage tile.
-- O'Neil: console password (`make configure ENV=prod NAME=prdsrv1 ARGS="--tags
-  console_password"`), `make plan ENV=prod` expected empty, a restart for the new kernel
-  (nothing runs there yet), and in UniFi a DNS record prdsrv1 = .113 and .113/.115 on the VPN.
+- Console password set; `make plan ENV=prod` shows no changes. O'Neil: a restart for the new
+  kernel (nothing runs there yet), and in UniFi a DNS record prdsrv1 = .113 and .113/.115 on
+  the VPN.
 
 ### Phase 6: move the apps from prdsrv2 to prdsrv1
 
