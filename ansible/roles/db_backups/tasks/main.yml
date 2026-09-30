@@ -1,0 +1,96 @@
+---
+- name: rclone installed version
+  ansible.builtin.command: rclone version
+  register: db_backups_rclone
+  check_mode: false
+  changed_when: false
+  failed_when: false
+
+- name: rclone {{ db_backups_rclone_version }}
+  when: db_backups_rclone.rc != 0 or ('v' ~ db_backups_rclone_version) not in db_backups_rclone.stdout_lines[0]
+  block:
+    - name: Download rclone {{ db_backups_rclone_version }}
+      ansible.builtin.get_url:
+        url: "https://downloads.rclone.org/v{{ db_backups_rclone_version }}/rclone-v{{ db_backups_rclone_version }}-linux-amd64.deb"
+        checksum: "sha256:https://downloads.rclone.org/v{{ db_backups_rclone_version }}/SHA256SUMS"
+        dest: /tmp/rclone.deb
+        mode: "0644"
+
+    - name: Install rclone {{ db_backups_rclone_version }}
+      ansible.builtin.apt:
+        deb: /tmp/rclone.deb
+      ignore_errors: "{{ ansible_check_mode }}"  # a dry run downloads nothing
+
+# Heartbeat URLs for the Uptime Kuma push monitors (dumps: HEARTBEAT_URL; off-site:
+# OFFSITE_HEARTBEAT_URL). Made empty here, filled by hand, never overwritten.
+- name: Settings file for the timers
+  ansible.builtin.copy:
+    dest: /etc/default/db-backups
+    content: |
+      # Uptime Kuma push URLs (homelab-apps backups/*.sh send them on success)
+      HEARTBEAT_URL=
+      OFFSITE_HEARTBEAT_URL=
+    force: false
+    mode: "0600"
+
+- name: Services
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ item.name }}.service"
+    content: |
+      # Managed by Ansible (proxmox-lab, role db_backups)
+      [Unit]
+      Description={{ item.description }}
+      After=docker.service
+      {{ item.extra | default('') }}
+      [Service]
+      Type=oneshot
+      EnvironmentFile=-/etc/default/db-backups
+      ExecStart={{ db_backups_dir }}/{{ item.script }}
+      Nice=10
+      IOSchedulingClass=idle
+    mode: "0644"
+  loop:
+    - name: db-dumps
+      description: Nightly database dumps into /opt/backups
+      script: dump.sh
+    - name: db-offsite
+      description: Encrypted copy of the dumps to Google Drive
+      script: offsite.sh
+      # Quietly skipped until homelab-apps backups/setup-offsite.sh has run
+      extra: "ConditionPathExists=/root/.config/rclone/rclone.conf\n"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Reload systemd
+
+- name: Timers
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ item.name }}.timer"
+    content: |
+      # Managed by Ansible (proxmox-lab, role db_backups)
+      [Unit]
+      Description={{ item.name }} every night at {{ item.time }}
+
+      [Timer]
+      OnCalendar=*-*-* {{ item.time }}:00
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+    mode: "0644"
+  loop:
+    - { name: db-dumps, time: "{{ db_backups_dump_time }}" }
+    - { name: db-offsite, time: "{{ db_backups_offsite_time }}" }
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Reload systemd
+
+- name: Flush handlers (systemd must know the units before enabling them)
+  ansible.builtin.meta: flush_handlers
+
+- name: Timers enabled
+  ansible.builtin.systemd:
+    name: "{{ item }}.timer"
+    enabled: true
+    state: started
+  loop: [db-dumps, db-offsite]
+  ignore_errors: "{{ ansible_check_mode }}"  # units do not exist yet in a dry run

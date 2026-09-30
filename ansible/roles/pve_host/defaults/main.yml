@@ -27,6 +27,11 @@ pve_tag_style: "color-map=prod:c62828:ffffff;lab:2e7d32:ffffff;terraform:5c6bc0:
 # Empty = skipped.
 pve_ntfy_url: ""
 
+# Alerts by email (set pve_alert_email: true in the inventory). The same Gmail app password
+# property-search and Uptime Kuma use; it sends to itself.
+pve_alert_user_ref: "op://property-search-prod/app/EMAIL_USERNAME"
+pve_alert_password_ref: "op://property-search-prod/app/EMAIL_PASSWORD"
+
 # Literal Proxmox template placeholders (not Jinja), hence !unsafe
 pve_backup_notes: !unsafe "{{guestname}}"
 pve_ntfy_body: !unsafe "{{ title }}\n\n{{ message }}"

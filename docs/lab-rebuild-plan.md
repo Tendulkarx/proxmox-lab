@@ -156,6 +156,22 @@ downtime for every site), not `caddy reload`.
 
 Check: restore one dump into a scratch database; list the remote. Undo: remove the timers.
 
+Status 2026-09-30: step 1 done; steps 2 and 3 wait for `homelab-apps/backups/setup-offsite.sh`
+(O'Neil, once: Google sign-in in a browser, keys into 1Password).
+- `homelab-apps/backups/dump.sh`, timer `db-dumps` at 01:30 (role `db_backups`): every Postgres
+  database plus roles, SQL Server master/model/msdb (it has no user databases), Oracle FREEPDB1
+  full Data Pump export, n8n's SQLite database and key, Paperless's exporter. 36 MB a night,
+  3 minutes. Restored property_search into a scratch database: 7,241 listings and 285,308 sold
+  prices, the same as live.
+- `offsite.sh`, timer `db-offsite` at 03:00: rclone crypt to Drive folder `homelab-offsite`,
+  30 days, without the dev database: about 0.8 GB. Skipped until rclone is set up.
+- Uptime Kuma push monitors "Database dumps" and "Off-site copy" (26 h window); their URLs are
+  in `/etc/default/db-backups` on prdsrv2.
+- Not covered off-site yet: Uptime Kuma's own data (on prdsrv3; in prx2's nightly backup).
+
+Alerts (phase 2 step 5): `scripts/gmail-alerts.sh` (O'Neil, Touch ID) adds a Gmail target on
+both hosts and the Backup Server, and the first notification Uptime Kuma has ever had.
+
 ### Phase 5: replace Windows prdsrv1 with Linux (Windows goes away)
 
 1. O'Neil copies anything he wants off Windows first.

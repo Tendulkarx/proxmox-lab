@@ -10,6 +10,8 @@ all:
           ansible_host: 10.69.20.114
           # Docker was set up by hand: never rewrite daemon.json or restart Docker
           docker_manage_daemon_json: false
+          # Nightly dumps and the off-site copy (roles/db_backups, homelab-apps backups/)
+          db_backups: true
         # Infra container on prx2 (terraform/envs/prod/containers.tf); first run: make lxc-bootstrap
         prdsrv3:
           ansible_host: 10.69.20.115

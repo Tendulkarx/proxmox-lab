@@ -9,3 +9,4 @@
     - { role: vm_baseline, tags: [baseline] }
     - { role: shell, tags: [shell] }
     - { role: docker, tags: [docker] }
+    - { role: db_backups, tags: [db_backups], when: db_backups | default(false) }

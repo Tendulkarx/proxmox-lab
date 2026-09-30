@@ -366,6 +366,43 @@
   changed_when: false
   tags: [tags]
 
+# S2: alerts by email through Gmail (pve_alert_email). Warnings and errors only, so a failed
+# backup or verify reaches O'Neil; successes stay quiet. The login is read from 1Password when
+# the target is first made (Touch ID); to change it, delete the target and run again.
+- name: Alerts by email (Gmail)
+  when: pve_alert_email | default(false)
+  tags: [alerts]
+  vars:
+    pve_alert_user: "{{ lookup('ansible.builtin.pipe', 'op read ' ~ (pve_alert_user_ref | quote)) }}"
+    pve_alert_password: "{{ lookup('ansible.builtin.pipe', 'op read ' ~ (pve_alert_password_ref | quote)) }}"
+  block:
+    - name: Does the gmail target exist?
+      ansible.builtin.command: pvesh get /cluster/notifications/endpoints/smtp/gmail
+      register: pve_gmail
+      check_mode: false
+      changed_when: false
+      failed_when: false
+
+    - name: gmail target
+      ansible.builtin.command: >
+        pvesh create /cluster/notifications/endpoints/smtp --name gmail
+        --server smtp.gmail.com --mode starttls --port 587
+        --username {{ pve_alert_user | quote }} --password {{ pve_alert_password | quote }}
+        --from-address {{ pve_alert_user | quote }} --mailto {{ pve_alert_user | quote }}
+        --author 'Proxmox {{ pve_node }}' --comment 'proxmox-lab: alerts'
+      when: pve_gmail.rc != 0
+      changed_when: true
+      no_log: true
+
+    - name: Send warnings and errors to gmail
+      ansible.builtin.command: >
+        pvesh create /cluster/notifications/matchers
+        --name warnings-to-gmail --target gmail --match-severity warning,error
+        --comment 'proxmox-lab: alerts'
+      register: pve_gmail_matcher
+      changed_when: pve_gmail_matcher.rc == 0
+      failed_when: pve_gmail_matcher.rc != 0 and 'already exists' not in pve_gmail_matcher.stderr
+
 # S2: alerts via ntfy (only when pve_ntfy_url is set) ------------------------------------
 - name: Alerts to ntfy
   when: pve_ntfy_url | length > 0

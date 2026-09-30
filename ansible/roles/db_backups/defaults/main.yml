@@ -1,0 +1,9 @@
+---
+# Nightly database dumps and the off-site copy (lab-rebuild-plan phase 4). The scripts are in
+# homelab-apps/backups (= /opt/docker/backups on the host); this role only installs rclone and
+# the timers. Dumps at 01:30 finish before the 02:30 VM backup, so they are inside it too.
+db_backups_dir: /opt/docker/backups
+db_backups_dump_time: "01:30"
+db_backups_offsite_time: "03:00"
+# rclone from rclone.org, not Ubuntu's 1.60 (2022); checked against the release's SHA256SUMS.
+db_backups_rclone_version: "1.75.1"

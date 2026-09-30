@@ -80,6 +80,8 @@ Short record of choices and the reason for each. Newest at the bottom.
 | 64 | Off-site in two tiers: tier 1, the irreplaceable data (dumps, Paperless, n8n, Uptime Kuma; under 1 GB) encrypted to Google Drive's free 15 GB; tier 2, whole VM backups to paid storage, decided last | Free Drive space fits what cannot be rebuilt; VM backups (30 to 40 GB) are convenience, rebuildable from the repos |
 | 65 | PBS runs **alongside** the vzdump job for two weeks (`pbs-nightly` 03:30), then vzdump and its copy go | A first restore from PBS worked, but two weeks of nightly verified snapshots are the proof before the only other copy is deleted |
 | 66 | prdsrv3 is an unprivileged container with only `nesting` on; a one-off root play (`make lxc-bootstrap`) makes turbx | nesting is the only feature flag the Terraform token may set, and Docker runs without keyctl; containers have no cloud-init, so the admin user is made over root's Terraform key, which vm_baseline then shuts off |
+| 67 | Alerts by email through the Gmail app password (Proxmox, Backup Server, Uptime Kuma), warnings and errors only | O'Neil's choice; one login already in 1Password; a send-only provider can replace it later in one place |
+| 68 | Database dumps at 01:30 into `/opt/backups` (14 days), off-site at 03:00 by rclone crypt to Drive with the `drive.file` scope (30 days) | Dumps land inside the 02:30 VM backup too; crypt means Google holds only ciphertext; drive.file limits rclone to its own files; the keys live only in 1Password |
 
 ## Open items
 

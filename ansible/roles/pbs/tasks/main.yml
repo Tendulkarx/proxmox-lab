@@ -137,3 +137,41 @@
 # The token for prx1, its permission (DatastoreBackup on this datastore only) and prx1's `pbs`
 # storage are made by scripts/pbs-connect.sh: the token secret is shown once and goes straight
 # to prx1, never through Ansible or the repo.
+
+# Alerts by email: the same Gmail login as the Proxmox hosts (pve_host defaults, inventory
+# pve_alert_email). Verify, prune and garbage collection problems reach O'Neil.
+- name: Alerts by email (Gmail)
+  when: pve_alert_email | default(false)
+  tags: [alerts]
+  vars:
+    pbs_alert_user: "{{ lookup('ansible.builtin.pipe', 'op read ' ~ (pve_alert_user_ref | quote)) }}"
+    pbs_alert_password: "{{ lookup('ansible.builtin.pipe', 'op read ' ~ (pve_alert_password_ref | quote)) }}"
+  block:
+    - name: Current notification targets and matchers
+      ansible.builtin.shell: |
+        set -o pipefail
+        proxmox-backup-manager notification target list --output-format json | python3 -c 'import json,sys; print(json.dumps([t["name"] for t in json.load(sys.stdin)]))'
+        proxmox-backup-manager notification matcher list --output-format json | python3 -c 'import json,sys; print(json.dumps([t["name"] for t in json.load(sys.stdin)]))'
+      args:
+        executable: /bin/bash
+      register: pbs_notif
+      check_mode: false
+      changed_when: false
+
+    - name: gmail target
+      ansible.builtin.command: >
+        proxmox-backup-manager notification endpoint smtp create gmail
+        --server smtp.gmail.com --mode starttls --port 587
+        --username {{ pbs_alert_user | quote }} --password {{ pbs_alert_password | quote }}
+        --from-address {{ pbs_alert_user | quote }} --mailto {{ pbs_alert_user | quote }}
+        --author 'Proxmox Backup Server' --comment 'proxmox-lab: alerts'
+      when: "'gmail' not in (pbs_notif.stdout_lines[0] | from_json)"
+      changed_when: true
+      no_log: true
+
+    - name: Send warnings and errors to gmail
+      ansible.builtin.command: >
+        proxmox-backup-manager notification matcher create warnings-to-gmail
+        --target gmail --match-severity warning,error --comment 'proxmox-lab: alerts'
+      when: "'warnings-to-gmail' not in (pbs_notif.stdout_lines[1] | from_json)"
+      changed_when: true
