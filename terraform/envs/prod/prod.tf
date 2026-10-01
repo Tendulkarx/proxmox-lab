@@ -26,14 +26,15 @@ removed {
 }
 
 # ---------------------------------------------------------------------------------------
-# prdsrv2: main Docker host: Caddy, Pi-hole, databases, apps (prx-server-1, VMID 101)
+# prdsrv2: database server: Postgres, SQL Server, Oracle, primary Pi-hole (prx-server-1, VMID 101)
 # ---------------------------------------------------------------------------------------
 resource "proxmox_virtual_environment_vm" "prdsrv2" {
   provider  = proxmox.prx1
   name      = "prdsrv2"
   node_name = "prx-server-1"
   vm_id     = 101
-  tags      = ["docker", "linux", "prod", "terraform"]
+  # Environment, OS, runtime, roles, terraform (Proxmox shows them A to Z)
+  tags      = ["prod", "linux", "docker", "database", "dns", "terraform"]
 
   bios          = "seabios"
   boot_order    = ["scsi0", "ide2", "net0"]

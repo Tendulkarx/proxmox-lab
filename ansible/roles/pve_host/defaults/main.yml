@@ -21,7 +21,7 @@ pve_backup_exclude: "{{ (range(900, 920) | list + [9000]) | join(',') }}"
 pve_backup_copy_time: "06:00"
 
 # Tag colours (Datacenter > Options > Tag Style)
-pve_tag_style: "color-map=prod:c62828:ffffff;lab:2e7d32:ffffff;terraform:5c6bc0:ffffff;docker:1e88e5:ffffff;windows:0078d4:ffffff;linux:f57c00:000000;template:757575:ffffff,shape=circle,ordering=config"
+pve_tag_style: "color-map=prod:c62828:ffffff;lab:2e7d32:ffffff;terraform:5c6bc0:ffffff;docker:1e88e5:ffffff;windows:0078d4:ffffff;linux:f57c00:000000;template:757575:ffffff;apps:8e24aa:ffffff;database:00897b:ffffff;dns:6d4c41:ffffff;monitoring:f9a825:000000,shape=circle,ordering=config"
 
 # Alerts: set to an ntfy topic URL (e.g. https://ntfy.sh/<long-random-topic>) to enable.
 # Empty = skipped.

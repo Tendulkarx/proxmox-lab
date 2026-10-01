@@ -4,7 +4,9 @@ resource "proxmox_virtual_environment_vm" "this" {
   node_name   = var.node_name
   vm_id       = var.vm_id
   description = var.description
-  tags        = sort(distinct(concat(["terraform"], var.tags)))
+  # Listed environment, OS, runtime, roles, then terraform, for reading here; Proxmox saves
+  # tags sorted A to Z whatever the order sent, and the provider ignores order.
+  tags        = distinct(concat(var.tags, ["terraform"]))
 
   on_boot = var.on_boot
   started = true

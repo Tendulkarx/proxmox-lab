@@ -13,7 +13,8 @@ resource "proxmox_virtual_environment_container" "prdsrv3" {
   node_name   = "prx-server-2"
   vm_id       = 102
   description = "Infra: Uptime Kuma and the second Pi-hole. Built by proxmox-lab (Terraform + make configure ENV=prod)."
-  tags        = ["docker", "infra", "linux", "prod", "terraform"]
+  # Environment, OS, runtime, roles, terraform (Proxmox shows them A to Z)
+  tags        = ["prod", "linux", "docker", "monitoring", "dns", "terraform"]
 
   unprivileged  = true
   start_on_boot = true

@@ -116,7 +116,7 @@ into `audit/`. Changes nothing anywhere.
 |---|---|
 | Lab VMIDs / IPs | 900-919 / 10.69.20.200-219 (VMID - 700) |
 | Template | VMID 9000 `ubuntu-2404-cloud-tpl` on each host |
-| Tags | `prod`, `lab`, `terraform`, `docker`, `linux`, `windows`, `template` (colours set by `pve_host`) |
+| Tags | Every machine has environment (`prod`, `lab`), OS (`linux`, `windows`), runtime (`docker`), its roles (`apps`, `database`, `dns`, `monitoring`) and `terraform`; `template` on templates. Proxmox shows them A to Z. Colours set by `pve_host` |
 | Storage | `data` for prod disks and backups; lab VMs on prx1 use `local-lvm` |
 | Default lab host | prx1 (62 GB RAM); prx2 (7.6 GB) only for small VMs |
 | Every decision | a row in `docs/decisions.md` with the reason |

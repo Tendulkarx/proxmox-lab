@@ -33,7 +33,7 @@ module "vm_prx1" {
   cores           = each.value.cores
   memory_mb       = each.value.memory_mb
   disk_gb         = each.value.disk_gb
-  tags            = concat(["lab"], each.value.tags)
+  tags            = concat(["lab", "linux"], each.value.tags)
   ipv4_address    = "${each.value.ipv4}/24"
   ssh_public_keys = local.ssh_keys
 }
@@ -50,7 +50,7 @@ module "vm_prx2" {
   cores           = each.value.cores
   memory_mb       = each.value.memory_mb
   disk_gb         = each.value.disk_gb
-  tags            = concat(["lab"], each.value.tags)
+  tags            = concat(["lab", "linux"], each.value.tags)
   ipv4_address    = "${each.value.ipv4}/24"
   ssh_public_keys = local.ssh_keys
 }
