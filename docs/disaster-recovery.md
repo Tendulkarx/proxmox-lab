@@ -21,7 +21,7 @@ cannot be recovered today and the order to close it.**
 | Off-site keys (rclone crypt, Drive login) | 1Password `prdsrv2-rclone`: **the only way to read the Drive copies** | Yes |
 | The last Windows prdsrv1 | storage `archive` on prx2 (protected, final backup of 2026-09-30) | No (on-site only) |
 | Network (UniFi), DNS (Cloudflare) | their cloud consoles | Yes |
-| Build notes | `agentic-os/07-home-tech` | Yes, if pushed (same repo) |
+| Guides and references | the Obsidian vault `~/development/obsidian/ob` (github.com/Tendulkarx/obsidian-vault, private): `30-resources/homelab` and `guides`. agentic-os `07-home-tech` holds only Claude's routing and decisions | Yes, if pushed |
 
 Break-glass access when SSH keys are gone: each host's web UI or physical console as
 `root@pam` (password in 1Password), then the VM console in the Proxmox UI as `turbx` with the
@@ -119,8 +119,8 @@ Scenario 5 steps 1 to 3 (tools, repo, SSH key). Check the 1Password items exist:
 ### B. Network
 
 UniFi: VLAN 20 `10.69.20.0/24`, gateway `.1`, DHCP pool ending at `.199` (lab uses
-`.200-.219`), hosts `.130` and `.131` static. Full detail: `agentic-os/07-home-tech/
-Home-Tech-Resources/home-network-reference.md`.
+`.200-.219`), hosts `.130` and `.131` static. Full detail: the vault's
+`30-resources/homelab/Reference - Home Network.md`.
 
 ### C. Rebuild a host (repeat per host)
 

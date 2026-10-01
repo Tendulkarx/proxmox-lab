@@ -8,8 +8,8 @@ Where everything lives and how each machine is set up. Updated 2026-09-25.
 |---|---|---|
 | `~/development/proxmox-lab` (this repo; github.com/Tendulkarx/proxmox-lab, private) | Proxmox hosts, VMs (Terraform), what runs inside the Linux VMs (Ansible), prdsrv1's Windows scripts, and these docs | `make ...` / `lab ...`, then commit |
 | `~/development/dotfiles` (github.com/Tendulkarx/dotfiles, private) | Your settings and apps on every machine: shell, git, SSH, terminal looks, wallpaper, app lists, macOS and Windows preferences | Edit the linked file, commit; `dot sync` elsewhere |
-| `~/development/agentic-os` (github.com/Tendulkarx/agentic-os) | Claude's memory and area notes; `07-home-tech` covers the lab | Claude sessions |
-| `~/development/obsidian/ob` | Your knowledge vault: guides, decisions, to-dos | You and Claude |
+| `~/development/agentic-os` (github.com/Tendulkarx/agentic-os) | Claude's memory and area notes; `07-home-tech` routes lab work and records decisions (no guides since 2026-10-01) | Claude sessions |
+| `~/development/obsidian/ob` (github.com/Tendulkarx/obsidian-vault, private) | Your knowledge vault: every home-lab guide and reference (`30-resources/homelab`, start at `Index - Home Lab`; `30-resources/guides`), decisions, to-dos (`20-areas/ideas-backlog.md`, Home Tech) | You and Claude |
 | 1Password, vault `Development` | Every secret: Proxmox API tokens, root passwords, `proxmox-vm-console`, SSH key `id_ed25519_homelab` | 1Password app |
 
 Planned changes: `docs/lab-rebuild-plan.md` (agreed 2026-09-29: Linux prdsrv1 as the main app
