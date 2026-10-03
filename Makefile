@@ -7,7 +7,7 @@
 #   make ssh NAME=tstsrv1     SSH into a lab VM
 #   make configure          run Ansible (baseline, shell, Docker) against ENV's VMs (ENV=lab|prod)
 #   make hosts-check        dry run of Proxmox host hardening;  make hosts  applies it
-#   make backup-vm HOST=<ip> VMID=<id>   one-off backup of a VM to that host's `data` storage
+#   make backup-vm HOST=<ip> VMID=<id> [STORAGE=pbs]   one-off backup to that host's `data` (or the Backup Server)
 #   make patch ENV=prod NAME=prdsrv2      OS updates + reboot if needed, one VM at a time
 #   make audit              read-only audit of hosts AND all VMs; reports land in audit/
 #   make status             one screen: hosts, VMs, pending hardware changes, backup disk, last backup
@@ -126,9 +126,11 @@ check-secrets:
 	@scripts/check-op-refs.sh
 
 .PHONY: backup-vm patch
+# STORAGE=pbs sends it to the Backup Server on prx2 (deduplicated, pruned by PBS); default data.
+STORAGE ?= data
 backup-vm:
-	@test -n "$(HOST)" -a -n "$(VMID)" || { echo "Usage: make backup-vm HOST=10.69.20.130 VMID=101"; exit 1; }
-	ssh -i ~/.ssh/id_ed25519_homelab root@$(HOST) 'vzdump $(VMID) --mode snapshot --storage data --compress zstd --notes-template "manual {{guestname}}" && pvesm list data --content backup --vmid $(VMID)'
+	@test -n "$(HOST)" -a -n "$(VMID)" || { echo "Usage: make backup-vm HOST=10.69.20.130 VMID=101 [STORAGE=pbs]"; exit 1; }
+	ssh -i ~/.ssh/id_ed25519_homelab root@$(HOST) 'vzdump $(VMID) --mode snapshot --storage $(STORAGE) $(if $(filter pbs,$(STORAGE)),,--compress zstd) --notes-template "manual {{guestname}}" && pvesm list $(STORAGE) --content backup --vmid $(VMID) | tail -3'
 
 patch:
 	@test -n "$(NAME)" || { echo "Usage: make patch ENV=prod NAME=<vm>"; exit 1; }
