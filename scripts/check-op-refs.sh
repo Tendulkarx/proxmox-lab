@@ -10,8 +10,8 @@ apps=${HOMELAB_APPS:-$root/../homelab-apps}
 
 # Literal references in both repos. decisions.md keeps old names on purpose, so it is skipped;
 # placeholders such as op://Development/<app>/... do not match the pattern.
-refs=$(grep -rhoE "op://[A-Za-z0-9._-]+/[A-Za-z0-9._-]+/[A-Za-z0-9._/-]+" "$root" "$apps" \
-  --exclude-dir=.git --exclude-dir=.terraform --exclude-dir=audit --exclude=decisions.md | sort -u)
+refs=$(grep -rhoIE "op://[A-Za-z0-9._-]+/[A-Za-z0-9._-]+/[A-Za-z0-9._/-]+" "$root" "$apps" \
+  --exclude-dir=.git --exclude-dir=.terraform --exclude-dir=audit --exclude-dir=__pycache__ --exclude=decisions.md | sort -u)
 
 # The off-site script builds its references from variables, so list its fields here.
 offsite=$apps/backups/setup-offsite.sh
