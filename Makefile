@@ -15,7 +15,7 @@
 #   make restart NAME=prdsrv1         FULL stop and start (applies pending hardware changes); asks first
 #   make prod-generate      Phase 4: describe existing prod VMs as Terraform (no changes made)
 #   make lxc-bootstrap NAME=prdsrv3   first login to a new container: makes turbx (then make configure)
-#   make check-secrets      every 1Password reference in this repo and homelab-apps still resolves (no values shown)
+#   make check-secrets      every 1Password reference here, in homelab-apps and property-search resolves (no values shown)
 
 ENV ?= lab
 TF  := op run --env-file=.env.op -- terraform -chdir=terraform/envs/$(ENV)

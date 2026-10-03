@@ -18,8 +18,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 MODE=${1:-}
-USER_REF=op://property-search-prod/app/EMAIL_USERNAME
-PASS_REF=op://property-search-prod/app/EMAIL_PASSWORD
+USER_REF=op://Development/homelab-property-search/EMAIL_USERNAME
+PASS_REF=op://Development/homelab-property-search/EMAIL_PASSWORD
 KEY=~/.ssh/id_ed25519_homelab
 
 echo "== Proxmox hosts and Backup Server"

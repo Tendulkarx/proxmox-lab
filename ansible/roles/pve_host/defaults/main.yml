@@ -29,8 +29,8 @@ pve_ntfy_url: ""
 
 # Alerts by email (set pve_alert_email: true in the inventory). The same Gmail app password
 # property-search and Uptime Kuma use; it sends to itself.
-pve_alert_user_ref: "op://property-search-prod/app/EMAIL_USERNAME"
-pve_alert_password_ref: "op://property-search-prod/app/EMAIL_PASSWORD"
+pve_alert_user_ref: "op://Development/homelab-property-search/EMAIL_USERNAME"
+pve_alert_password_ref: "op://Development/homelab-property-search/EMAIL_PASSWORD"
 # Alerts go to the plus-address <user>+<tag>@..., so one Gmail filter (to:...+homelab@...) labels
 # every alert from Proxmox, the Backup Server and Uptime Kuma.
 pve_alert_tag: homelab
