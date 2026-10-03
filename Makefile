@@ -15,6 +15,7 @@
 #   make restart NAME=prdsrv1         FULL stop and start (applies pending hardware changes); asks first
 #   make prod-generate      Phase 4: describe existing prod VMs as Terraform (no changes made)
 #   make lxc-bootstrap NAME=prdsrv3   first login to a new container: makes turbx (then make configure)
+#   make check-secrets      every 1Password reference in this repo and homelab-apps still resolves (no values shown)
 
 ENV ?= lab
 TF  := op run --env-file=.env.op -- terraform -chdir=terraform/envs/$(ENV)
@@ -25,7 +26,7 @@ LAB_KNOWN_HOSTS := $(HOME)/.ssh/known_hosts.proxmox-lab
 .PHONY: help check init plan up list down destroy-lab ssh fmt validate ansible-deps configure forget-host hosts hosts-check prod-generate lxc-bootstrap
 
 help:
-	@sed -n '2,18p' Makefile
+	@sed -n '2,19p' Makefile
 
 check:
 	@command -v terraform >/dev/null || { echo "Install terraform: brew install hashicorp/tap/terraform"; exit 1; }
@@ -119,6 +120,10 @@ audit-hosts:
 
 audit-vms:
 	cd ansible && ANSIBLE_SSH_ARGS="-o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile='$(LAB_KNOWN_HOSTS) ~/.ssh/known_hosts'" ansible-playbook -i inventory/prod.yml -i inventory/lab.generated.yml playbooks/audit.yml
+
+.PHONY: check-secrets
+check-secrets:
+	@scripts/check-op-refs.sh
 
 .PHONY: backup-vm patch
 backup-vm:

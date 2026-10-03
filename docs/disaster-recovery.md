@@ -10,21 +10,21 @@ cannot be recovered today and the order to close it.**
 | Item | Where it lives today | Survives losing the Mac? |
 |---|---|---|
 | This repo (all code and docs) | Mac, and github.com/Tendulkarx/proxmox-lab (private) since 2026-09-25 | Yes |
-| Proxmox API tokens, root and turbx passwords | 1Password (`proxmox-vm-console` is turbx's console password on every VM) | Yes |
+| Proxmox API tokens, root and turbx passwords | 1Password, vault Development (`prx1 - Proxmox root@pam`; `proxmox-vm-console` is turbx's console password on every VM) | Yes |
 | SSH key `id_ed25519_homelab` | Mac, and 1Password (SSH Key item `id_ed25519_homelab`, vault Development, since 2026-09-24) | Yes |
 | Terraform state | Mac only, git-ignored | No, but rebuildable by re-import |
 | Dotfiles | `~/development/dotfiles` | Yes, if pushed: github.com/Tendulkarx/dotfiles (private) |
-| App stacks (`/opt/docker/*` on prdsrv1, prdsrv2, prdsrv3) | github.com/Tendulkarx/homelab-apps (private; each host has a sparse checkout of its folders, `hosts/<host>`). `.env` values in 1Password as `prdsrv2-<app>`, plus the per-host values in its README | Yes |
+| App stacks (`/opt/docker/*` on prdsrv1, prdsrv2, prdsrv3) | github.com/Tendulkarx/homelab-apps (private; each host has a sparse checkout of its folders, `hosts/<host>`). `.env` values in 1Password as `homelab-<app>`, plus the per-host values in its README | Yes |
 | VM backups | prx1: Proxmox Backup Server on prx2 (`pbs-nightly` 03:30, 7 daily, 4 weekly, 3 monthly, verified weekly; the only job on prx1 since 2026-09-30). prx2 (prdsrv3): `nightly` 02:30 to its own `data` (keep 2). prx1's `data` holds no backups any more (the last old files were deleted 2026-09-30) | Survives prx1 entirely; not off-site (tier 2, phase 9) |
 | Database and app dumps | `/opt/backups/<date>` on prdsrv2 (Postgres, SQL Server, Oracle) and prdsrv1 (n8n, Paperless, Homarr), 01:30, 14 days; inside the VM backups too | Yes: encrypted copy in Google Drive `homelab-offsite/daily/<date>/<host>`, 30 days (03:00) |
 | prdsrv3's app data (Uptime Kuma's monitors, the Beszel hub's history, fingerprints and key) | Only in prdsrv3's nightly backup on prx2's own `data` (keep 2); no dump, no off-site copy (gap G9) | No |
-| Off-site keys (rclone crypt, Drive login) | 1Password `prdsrv2-rclone`: **the only way to read the Drive copies** | Yes |
+| Off-site keys (rclone crypt, Drive login) | 1Password `homelab-rclone-offsite`: **the only way to read the Drive copies** | Yes |
 | The last Windows prdsrv1 | storage `archive` on prx2 (protected, final backup of 2026-09-30) | No (on-site only) |
 | Network (UniFi), DNS (Cloudflare) | their cloud consoles | Yes |
 | Guides and references | the Obsidian vault `~/development/obsidian/ob` (github.com/Tendulkarx/obsidian-vault, private): `30-resources/homelab` and `guides`. agentic-os `07-home-tech` holds only Claude's routing and decisions | Yes, if pushed |
 
 Break-glass access when SSH keys are gone: each host's web UI or physical console as
-`root@pam` (password in 1Password), then the VM console in the Proxmox UI as `turbx` with the
+`root@pam` (password in 1Password, `prx1 - Proxmox root@pam`), then the VM console in the Proxmox UI as `turbx` with the
 `proxmox-vm-console` password from 1Password (set on every VM by `vm_baseline`; the console
 accepts it, SSH never does). Use Console > **xterm.js** where the VM has a serial port (template
 VMs; prdsrv2 after its next restart): it accepts paste. noVNC doesn't, so type it there.

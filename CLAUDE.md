@@ -15,7 +15,7 @@ source of truth for how things run.
   service: Caddy, Pi-hole, Postgres, SQL Server, Oracle, Paperless, n8n, Metabase...).
 - prdsrv2's apps: `/opt/docker` is the git repo github.com/Tendulkarx/homelab-apps (private),
   cloned on the Mac at `~/development/homelab-apps`. Pinned image versions; `.env` files are
-  not in git, their values are in 1Password as `prdsrv2-<app>` (section `env`).
+  not in git, their values are in 1Password as `homelab-<app>` (section `env`).
 - Lab VMs: `terraform/envs/lab/vms.auto.tfvars`, VMID 900-919 = IP 10.69.20.200-219, prx1 default.
 - Secrets: 1Password vault `Development`, read at run time by `op run` (Touch ID prompt).
   SSH key `~/.ssh/id_ed25519_homelab`; VM user `turbx` (passwordless sudo); hosts as `root`.

@@ -152,12 +152,12 @@ downtime for every site), not `caddy reload`.
 2. Nightly encrypted copy (rclone crypt) to Google Drive of what cannot be rebuilt: the dumps,
    Paperless's exporter output, n8n workflows, Uptime Kuma data, and the `.env` files are not
    needed (1Password holds them). Under 1 GB; 30 days kept; fits the free 15 GB.
-3. rclone's Drive token and crypt keys in 1Password (`prdsrv2-rclone`).
+3. rclone's Drive token and crypt keys in 1Password (`homelab-rclone-offsite`).
 
 Check: restore one dump into a scratch database; list the remote. Undo: remove the timers.
 
 Status 2026-09-30: phase 4 done. The first off-site copy (12 files, 26 MB) passed
-`rclone cryptcheck` against the local dumps; the keys are in 1Password `prdsrv2-rclone`. Open:
+`rclone cryptcheck` against the local dumps; the keys are in 1Password `homelab-rclone-offsite`. Open:
 rclone's shared Google client is retired during 2026, so an own OAuth client is needed
 (`homelab-apps/backups/offsite.md`, O'Neil in the Google Cloud console).
 - `homelab-apps/backups/dump.sh`, timer `db-dumps` at 01:30 (role `db_backups`): every Postgres
@@ -186,7 +186,7 @@ notification, on all 15 monitors.
    `data`, guest agent, `discard` and `ssd`, CPU `host`, start order 2. The iGPU is released.
 4. Ansible: `vm_baseline`, `shell` (dotfiles), `docker`; UFW baseline; SSH key only.
 5. UniFi: DNS record prdsrv1 to .113 and allow .113 on the VPN (the open item from
-   `prdsrv1-windows.md`). 1Password items `prdsrv1-<app>`. Uptime Kuma monitor, Homepage tile.
+   `prdsrv1-windows.md`). 1Password items `homelab-<app>`. Uptime Kuma monitor, Homepage tile.
 6. Retire the Windows-only pieces: `scripts/windows/prdsrv1-*.ps1`, dotfiles machine
    `prdsrv1` (kept in git history).
 
