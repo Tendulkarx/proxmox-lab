@@ -1,6 +1,6 @@
 # Home setup map
 
-Where everything lives and how each machine is set up. Updated 2026-09-25.
+Where everything lives and how each machine is set up. Updated 2026-10-07.
 
 ## The repos and notes
 
@@ -43,6 +43,9 @@ Windows machines only accept SSH and Remote Desktop from these three ranges.
 | osbmac1 | Main Mac (personal) | 10.69.10.221 at home (DHCP) | dotfiles `install.sh` |
 | osbmac2 | Second Mac | 10.69.10.214 (DHCP) | dotfiles `install.sh` |
 | osbwin1 | Windows laptop | 10.69.10.24 (DHCP) | dotfiles `install.ps1` |
+
+Physical hardware (rack, power, cabling, host models, disks): vault
+`30-resources/homelab/Reference - Rack and Hardware`.
 
 Naming: personal machines `osb<os><N>` (mac, win, lnx; highest number + 1, never reused);
 lab VMs `tstsrv<N>` (lowest free N); prod VMs `prdsrv<N>` (VMID 99 + N, IP highest prod IP + 1).
