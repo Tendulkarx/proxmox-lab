@@ -24,7 +24,7 @@ inventory and which credentials, so a command behaves the same whether you or Cl
 
 | Layer | What it is | Owned by | Lives in |
 |---|---|---|---|
-| 0. Hardware + network | 2 mini PCs, UniFi UDM SE, VLANs, Cloudflare DNS | You (manual) | the vault's `Reference - Home Network` (`~/development/obsidian/ob/30-resources/homelab`) |
+| 0. Hardware + network | 2 mini PCs, UniFi UDM Pro SE, VLANs, Cloudflare DNS | You (manual) | the vault's `Reference - Home Network` (`~/development/obsidian/ob/30-resources/homelab`) |
 | 1. Proxmox install | PVE 9 on each host, `vmbr0`, the `data` disk | You, once per host | This doc; `docs/disaster-recovery.md` |
 | 2. Host preparation | API user and token, storage content types, template 9000 | `scripts/prep-host.sh` | run once per host as root |
 | 3. Host configuration | repos, kernels, root SSH, hostname, backup job, tags, start order, alerts | Ansible role `pve_host` | `ansible/roles/pve_host` |
