@@ -10,7 +10,7 @@ cannot be recovered today and the order to close it.**
 | Item | Where it lives today | Survives losing the Mac? |
 |---|---|---|
 | This repo (all code and docs) | Mac, and github.com/Tendulkarx/proxmox-lab (private) since 2026-09-25 | Yes |
-| Proxmox API tokens, root and turbx passwords | 1Password, vault Development (`proxmox-root`; `proxmox-vm-console` is turbx's console password on every VM) | Yes |
+| Proxmox API tokens, root and turbx passwords | 1Password, vault Development (`proxmox-prx1-root`, `proxmox-prx2-root`; `proxmox-vm-console` is turbx's console password on every VM) | Yes |
 | SSH key `id_ed25519_homelab` | Mac, and 1Password (SSH Key item `id_ed25519_homelab`, vault Development, since 2026-09-24) | Yes |
 | Terraform state | Mac only, git-ignored | No, but rebuildable by re-import |
 | Dotfiles | `~/development/dotfiles` | Yes, if pushed: github.com/Tendulkarx/dotfiles (private) |
@@ -24,7 +24,7 @@ cannot be recovered today and the order to close it.**
 | Guides and references | the Obsidian vault `~/development/obsidian/ob` (github.com/Tendulkarx/obsidian-vault, private): `30-resources/homelab` and `guides`. agentic-os `07-home-tech` holds only Claude's routing and decisions | Yes, if pushed |
 
 Break-glass access when SSH keys are gone: each host's web UI or physical console as
-`root@pam` (password and each host's TOTP code in 1Password, `proxmox-root`), then the VM console in the Proxmox UI as `turbx` with the
+`root@pam` (password and TOTP code in 1Password, `proxmox-prx1-root` or `proxmox-prx2-root`), then the VM console in the Proxmox UI as `turbx` with the
 `proxmox-vm-console` password from 1Password (set on every VM by `vm_baseline`; the console
 accepts it, SSH never does). Use Console > **xterm.js** where the VM has a serial port (template
 VMs; prdsrv2 after its next restart): it accepts paste. noVNC doesn't, so type it there.
