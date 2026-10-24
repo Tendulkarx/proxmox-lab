@@ -63,7 +63,7 @@ From any folder, `lab <command>` runs the make target here (`lab` alone goes to 
 - A prod VM restart is always your call: `lab restart <vm>` (it asks first). A restart from
   inside the guest does **not** apply hardware changes; `lab status` shows any still pending.
 - The backup disk filling up, or backups growing: `docs/reclaim-disk-space.md`.
-- Every alert arrives under the Gmail label `Homelab` (sent to `user+homelab@example.com`).
+- Every alert arrives under the Gmail label `Homelab` (sent to `<user>+homelab@gmail.com`).
 - A backup alert email (Proxmox, Backup Server) or a down "Database dumps" / "App backups" /
   "Off-site copy" monitor: `journalctl -u db-dumps -u db-offsite` on that host; re-run with
   `sudo systemctl start db-dumps db-offsite`. Restores: `docs/disaster-recovery.md`.

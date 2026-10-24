@@ -171,7 +171,7 @@ rclone's shared Google client is retired during 2026, so an own OAuth client is 
   in `/etc/default/db-backups` on prdsrv2.
 - Not covered off-site yet: Uptime Kuma's own data (on prdsrv3; in prx2's nightly backup).
 
-Alerts (phase 2 step 5): done by `scripts/gmail-alerts.sh`, all sent to `user+homelab@example.com` so one
+Alerts (phase 2 step 5): done by `scripts/gmail-alerts.sh`, all sent to `<user>+homelab@gmail.com` so one
 Gmail filter labels them (`Homelab`, confirmed working 2026-09-30): Gmail target and warnings/errors
 matcher on both hosts and the Backup Server (test emails sent), and Uptime Kuma's first
 notification, on all 15 monitors.
@@ -221,7 +221,7 @@ remove from prdsrv2:
    `10.69.20.114:5432`; prdsrv2's UFW allows 5432 from .113 only, plus the Mac).
 3. n8n (the forced-command SSH key and `run.sh` move with property-search).
 4. Paperless (data, media and its Redis).
-5. Caddy last: Cloudflare wildcard `*.example.com` from .114 to .113, then Caddy on prdsrv2
+5. Caddy last: Cloudflare wildcard `*.<domain>` from .114 to .113, then Caddy on prdsrv2
    stops. Short outage of the web UIs only (DNS and databases unaffected).
 
 Check after each: the app's page loads, Uptime Kuma green, property-search's next run is `ok`.

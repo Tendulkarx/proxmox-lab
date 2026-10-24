@@ -10,3 +10,7 @@ dotfiles_dir: "{{ lookup('env', 'HOME') }}/development/dotfiles"
 # Console (not SSH) password for admin_user on every VM: break-glass through the Proxmox
 # web console if the SSH key is lost. Read from 1Password at run time; SSH stays key-only.
 vm_console_password_ref: "op://Development/proxmox-vm-console/password"
+
+# Base domain of every app address (Caddy wildcard), read from 1Password only when a play uses
+# it; $DOMAIN wins, so a run can skip the lookup.
+homelab_domain: "{{ lookup('ansible.builtin.env', 'DOMAIN') or lookup('ansible.builtin.pipe', 'op read op://Development/homelab-shared/env/DOMAIN') }}"

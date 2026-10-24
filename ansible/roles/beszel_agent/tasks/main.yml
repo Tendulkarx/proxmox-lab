@@ -59,7 +59,7 @@
     content: |
       # Managed by Ansible (proxmox-lab role beszel_agent)
       [Unit]
-      Description=Beszel agent (reports to beszel.example.com)
+      Description=Beszel agent (reports to beszel.{{ homelab_domain }})
       After=network-online.target
       Wants=network-online.target
 

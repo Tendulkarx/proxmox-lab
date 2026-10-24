@@ -7,8 +7,8 @@
 beszel_agent_version: "0.20.0"
 beszel_agent_sha256: f03b8ec7349a8133a0329ef50619bc3a97a7bb0a0e423866416ecc818cebc43c
 
-beszel_agent_hub_url: https://beszel.example.com
-# Registration token and the hub's public key (1Password "Homelab - Beszel", vault Development)
+beszel_agent_hub_url: "https://beszel.{{ homelab_domain }}"
+# Registration token and the hub's public key (1Password, the Beszel login item, vault Development)
 beszel_agent_token_ref: "op://Development/qm4vzqlljxjkjqhgpnggqf3hue/agents/agent-token"
 beszel_agent_key_ref: "op://Development/qm4vzqlljxjkjqhgpnggqf3hue/agents/hub-key"
 
