@@ -75,7 +75,7 @@ pvesh set /cluster/options --tag-style 'color-map=prod:c62828:ffffff;lab:2e7d32:
 | M3 Bookworm repos | both hosts | gone |
 | M4 libknet1 | "not correctly installed" | cosmetic (renamed libknet1t64 on PVE 9); only libknet1t64 installed |
 | M5 prdsrv2 guest agent | off | on and responding |
-| S1 Root SSH | password allowed | key only (drop-in overrides sshd_config). **TOTP on root@pam still to do** |
+| S1 Root SSH | password allowed | key only (drop-in overrides sshd_config). **Done 2026-10-24**: TOTP on root@pam on both hosts, 10 recovery keys each (1Password `proxmox-prx1-root`, `proxmox-prx2-root`) |
 | S2 Alerts | none | **Done 2026-09-30**: Gmail target and warnings/errors matcher on both hosts and the Backup Server (`scripts/gmail-alerts.sh`, decision 67) |
 | S3 Hostnames | `*.ob.local` | `*.home.arpa`, node certs reissued (valid to 2028) |
 | S4 prdsrv2 discard/SSD | off | on |
