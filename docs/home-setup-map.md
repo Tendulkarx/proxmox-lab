@@ -68,7 +68,7 @@ Rules and checks: `terraform/envs/*/variables.tf`, dotfiles `machines/README.md`
 | Any host or VM from a Mac | `ssh <name>` (`prx1`, `prdsrv2`, `tstsrv1` ...); the SSH config knows them all |
 | A Windows machine | Remote Desktop (Windows App), or `ssh turbx@<ip>` (key only) |
 | A VM when SSH is down | Proxmox web UI, console. Linux and prdsrv1: Console > **xterm.js** accepts paste; the password is 1Password `proxmox-vm-console` |
-| A host when keys are lost | Proxmox web UI as `root@pam` (password in 1Password, Development: `prx1 - Proxmox root@pam`), then the node Shell |
+| A host when keys are lost | Proxmox web UI as `root@pam` (password and each host's TOTP code in 1Password, Development: `proxmox-root`), then the node Shell |
 
 ## Day to day
 
