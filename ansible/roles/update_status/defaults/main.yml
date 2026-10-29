@@ -1,0 +1,6 @@
+---
+# The Homarr Updates card's data: homelab-apps update-status.sh writes /opt/status/updates.json
+# (which apps are behind their newest release) every six hours; Caddy serves it to Homarr only.
+update_status_script: /opt/docker/update-status.sh
+update_status_dir: /opt/status
+update_status_calendar: "*-*-* 00/6:15:00"

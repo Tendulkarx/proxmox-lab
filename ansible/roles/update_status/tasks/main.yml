@@ -1,0 +1,55 @@
+---
+# The script runs as the admin user, who owns /opt/docker (git refuses a repo owned by another
+# user) and the status folder; Caddy mounts the folder read-only.
+- name: Status folder
+  ansible.builtin.file:
+    path: "{{ update_status_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+
+- name: Service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/update-status.service
+    content: |
+      # Managed by Ansible (proxmox-lab, role update_status)
+      [Unit]
+      Description=Which apps are behind their newest release, for Homarr
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      User={{ ansible_user }}
+      ExecStart={{ update_status_script }}
+      Nice=10
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Timer
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/update-status.timer
+    content: |
+      # Managed by Ansible (proxmox-lab, role update_status)
+      [Unit]
+      Description=update-status every six hours
+
+      [Timer]
+      OnCalendar={{ update_status_calendar }}
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Flush handlers (systemd must know the units before enabling them)
+  ansible.builtin.meta: flush_handlers
+
+- name: Timer enabled
+  ansible.builtin.systemd:
+    name: update-status.timer
+    enabled: true
+    state: started
+  ignore_errors: "{{ ansible_check_mode }}"  # units do not exist yet in a dry run

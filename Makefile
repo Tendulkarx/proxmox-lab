@@ -154,4 +154,4 @@ restart:
 	  printf 'Full stop and start of %s (VMID %s on %s). Its services are down for 1 to 2 minutes. Type yes: ' "$(NAME)" "$$2" "$$1" && \
 	  read ans && [ "$$ans" = yes ] || { echo "cancelled"; exit 1; }; \
 	  set -- $$(scripts/vm-locate.sh $(NAME)); \
-	  ssh -i ~/.ssh/id_ed25519_homelab root@$$1 "qm shutdown $$2 --timeout 240 && qm start $$2 && qm status $$2"
+	  ssh -i ~/.ssh/id_ed25519_homelab root@$$1 "c=qm; pct status $$2 >/dev/null 2>&1 && c=pct; \$$c shutdown $$2 --timeout 240 && \$$c start $$2 && \$$c status $$2"

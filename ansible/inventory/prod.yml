@@ -11,6 +11,8 @@ all:
           ansible_host: 10.69.20.113
           # Nightly backup of n8n and Paperless (roles/db_backups, homelab-apps backups/)
           db_backups: true
+          # Updates card data for Homarr (roles/update_status, homelab-apps update-status.sh)
+          update_status: true
           # Containers here reach Caddy on this host's own address (Homarr's integrations and up/down
           # checks use the public names, which point here). Docker's networks only; the LAN reaches
           # 80/443 through Docker's own published ports regardless of UFW.
