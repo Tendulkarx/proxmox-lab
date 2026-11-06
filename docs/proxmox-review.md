@@ -269,5 +269,14 @@ and 27 Oct were clean and started over SSH from osbmac1 (patching), not crashes 
 | N7 | No fix needed: all nebula-sync failures were `Sync failed ... authenticate` at 19:09 on 27 Oct, while the primary Pi-hole restarted with the host |
 | iGPU | Not applied: removing `i915.enable_guc=3 i915.max_vfs=7` from prx1's `/etc/default/grub` (then `update-grub`) is left to O'Neil with the reboot |
 
+Caused by the N2 fix: the recreated Oracle container has a new hostname, but
+`data/dbconfig/FREE/listener.ora` (in the data folder, not the image) still named the old one
+(`HOST = a310321ab39f`), so the listener never started and 1521 refused every connection
+(`NJS-503 ... ECONNREFUSED 10.69.20.114:1521`) from 18:17 until about 18:42. The database itself
+stayed open. Fixed in place: listener `HOST = 0.0.0.0`, tnsnames `localhost`, `lsnrctl start`,
+`alter system register`; `freepdb1` READY, port open from prdsrv1 and osbmac1. Survives future
+recreates. Lesson: check `lsnrctl status` and a remote connection, not only the container's
+health status, after touching Oracle.
+
 Seen during the fixes: all 18 Uptime Kuma monitors were paused from the web UI at 18:13:40 by
 O'Neil's login; left paused for O'Neil to resume.
