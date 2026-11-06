@@ -255,3 +255,19 @@ rules limit every published port (including 2375 to prdsrv1 only).
 Checked and not findings: Metabase's 44 "error" lines are Liquibase migration file names; Arcane's
 are retried image-check warnings that completed ("12 checked, 0 errors"). The reboots on 18, 23
 and 27 Oct were clean and started over SSH from osbmac1 (patching), not crashes or power cuts.
+
+### Fixes (2026-11-06, evening)
+
+| # | Status |
+|---|---|
+| N1 | Prepared, not applied: `terraform/envs/prod/containers.tf` disk 8 to 16 GB; `make plan ENV=prod` shows only `size = 8 -> 16`, in place. O'Neil to run `make up ENV=prod`, then commit |
+| N2 | Fixed: the compose file already pinned `23.26.3.0` and the database reports `SQL*Plus: Release 23.26.3.0.0`; the container had been created from `:latest`. Image retagged locally, container recreated from it (`--pull never`), healthy in about 30 s, instance `OPEN`; `:latest` tag removed |
+| N3 | Fixed: 11.5 GB build cache removed on prdsrv1, 8 old property-search images plus `pihole:latest` and `alpine:3.20` on prdsrv2, `hello-world` on prdsrv3. homelab-apps c528830: `update.sh` prunes the build cache after each Caddy build; property-search `run.sh` removes older release images after a good run (skips if it cannot read the current one) |
+| N4 | Partly: 6 old kernels removed on each host (26 running and 28 kept). Reboot of both hosts still to do, by O'Neil |
+| N5b | Fixed: role `pbs` sets the Backup Server's `root@pam` email (same Gmail login as the hosts); applied with `make hosts ARGS="--limit prx2 --tags alerts"` |
+| N6 | Fixed: Uptime Kuma monitor 18 (Homarr) now checks `/api/health/live` (200, 156 bytes) instead of `/` (307 plus 300 KB); database copy `kuma.db.bak-20261106` |
+| N7 | No fix needed: all nebula-sync failures were `Sync failed ... authenticate` at 19:09 on 27 Oct, while the primary Pi-hole restarted with the host |
+| iGPU | Not applied: removing `i915.enable_guc=3 i915.max_vfs=7` from prx1's `/etc/default/grub` (then `update-grub`) is left to O'Neil with the reboot |
+
+Seen during the fixes: all 18 Uptime Kuma monitors were paused from the web UI at 18:13:40 by
+O'Neil's login; left paused for O'Neil to resume.

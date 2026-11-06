@@ -176,3 +176,19 @@
         --target gmail --match-severity warning,error --comment 'proxmox-lab: alerts'
       when: "'warnings-to-gmail' not in (pbs_notif.stdout_lines[1] | from_json)"
       changed_when: true
+
+    # The default matcher's target mail-to-root sends to root@pam's address. The Backup Server
+    # keeps its own users, so root@pam there had none: every notification and every mail
+    # forwarded by proxmox-mail-forward logged "At least one recipient has to be specified"
+    # (audit 2026-11-06, N5b). Same address as root@pam on the Proxmox hosts.
+    - name: root@pam email (for mail-to-root)
+      ansible.builtin.shell: |
+        set -o pipefail
+        cur=$(proxmox-backup-manager user list --output-format json | python3 -c 'import json,sys; print([u.get("email") or "" for u in json.load(sys.stdin) if u["userid"] == "root@pam"][0])')
+        [ "$cur" = {{ pbs_alert_user | quote }} ] && exit 0
+        proxmox-backup-manager user update root@pam --email {{ pbs_alert_user | quote }} && echo changed
+      args:
+        executable: /bin/bash
+      register: pbs_root_email
+      changed_when: "'changed' in pbs_root_email.stdout"
+      no_log: true
