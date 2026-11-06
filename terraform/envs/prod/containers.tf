@@ -42,7 +42,9 @@ resource "proxmox_virtual_environment_container" "prdsrv3" {
 
   disk {
     datastore_id = "data"
-    size         = 8
+    # 16 GB (was 8): an Uptime Kuma update pulls a 2.5 GB image before the old one goes
+    # (audit 2026-11-06, N1). Containers grow online; they cannot shrink.
+    size = 16
   }
 
   network_interface {
