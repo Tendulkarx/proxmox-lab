@@ -218,3 +218,40 @@ Dozzle (`logs.`) shows every container on prdsrv2; property-search keeps a log f
 | L1 | The hosts' journald, prdsrv1's Windows Event Log, and anything older than Docker's 30 MB per container: no one place to search, no history, no alerts | Phase 2: Grafana Loki and Grafana as a prdsrv2 stack, Grafana Alloy on each host and VM (via `pve_host`, `vm_baseline`, and the Windows installer for prdsrv1). Keep 30 days; alert on errors from backups and property-search. Dozzle stays for live tailing |
 | L2 | Future Docker VMs would not appear in Dozzle | Add a Dozzle agent (`amir20/dozzle agent`, port 7007) to the Ansible `docker` role, and list agents in `DOZZLE_REMOTE_AGENT` on prdsrv2 |
 
+
+## Re-audit (2026-11-06, 18:05): both hosts, prdsrv1, prdsrv2, prdsrv3
+
+`make audit`; tstsrv1 unreachable because it is stopped (lab VM, `onboot: 0`), its report is from
+30 Sep. Healthy overall: no failed units anywhere, SMART passed on every disk, Backup Server 94 of
+94 backups OK with weekly verifies OK (the 18 Oct verify shows `unknown`: prx2 was rebooted at
+07:03 during it), latest snapshots of VM 100 and 101 today, `db-dumps` and `db-offsite` succeeded
+on prdsrv1 and prdsrv2, TOTP on `root@pam` on both hosts, Gmail alerts configured, `DOCKER-USER`
+rules limit every published port (including 2375 to prdsrv1 only).
+
+### Earlier items
+
+| # | Status |
+|---|---|
+| V9 pin versions | Still open, partly: `oracle` runs `container-registry.oracle.com/database/free:latest` (N2) |
+| S8 prx1 boot SSD | Still open: `Power_On_Hours 74383` (was 73403), wear 99% left, 0 reallocated |
+| prdsrv1 iGPU (GVT-g) | Obsolete: prdsrv1 is Linux since 30 Sep; prx1 cmdline still has `i915.enable_guc=3 i915.max_vfs=7` (harmless; remove at the next host change) |
+| N5 PVE firewall off | Unchanged, deliberate |
+| L1 central logging | Still open, not started |
+| L2 Dozzle agents | Fixed: `dozzle-agent` on prdsrv2 and prdsrv3 |
+| V6 dumps | Fixed: nightly dumps in `/opt/backups` on prdsrv1 and prdsrv2, 2026-11-01 to 11-06 present |
+
+### New
+
+| # | Evidence | Why it matters | Fix |
+|---|---|---|---|
+| N1 | prdsrv3 `/dev/loop0 7.8G 4.8G 2.7G 65% /`; `louislam/uptime-kuma:2.5.9 2.53GB` | An Uptime Kuma update pulls about 2.5 GB before `update.sh` deletes the old image, so the disk can fill on prdsrv3, which carries the second Pi-hole and all monitoring | Grow the rootfs to 16 GB in Terraform (LXC disks grow online); check for a smaller Uptime Kuma image variant |
+| N2 | prdsrv2 `oracle container-registry.oracle.com/database/free:latest` (10 GB, 4 months old) | The only floating tag: `check-updates.sh` cannot track it and any recreate pulls whatever is newest, possibly a new major that changes the data files | Pin the running version (tag or digest) in `homelab-apps/oracle` |
+| N3 | prdsrv1 `Build Cache 73 11.62GB 11.46GB` reclaimable; prdsrv2 `Images 18 7 ... 1.461GB` (9 old `property-search` tags, `pihole:latest`, `alpine:3.20`) | Space only; grows with every Caddy build and property-search release | `docker builder prune -f` after the Caddy build in `update.sh`; prune superseded property-search images after a successful run |
+| N4 | Both hosts `running kernel: 7.0.14-26-pve`, `proxmox-kernel-7.0.14-28` installed; 8 kernels installed on each | New kernel not live until a reboot | Reboot both hosts in your next patch window (avoid Sunday 07:00, the verify job); `apt autoremove` the old kernels |
+| N5b | prx2 journal: `could not notify via target 'mail-to-root': ... At least one recipient has to be specified!` (02:31, 05:30, 16:05) | Warnings still reach Gmail through `warnings-to-gmail`; info-level mail is dropped with an error each time | Give the Backup Server's `root@pam` an email address, or point the default matcher at `gmail` |
+| N6 | prdsrv1 `caddy: 110 error lines in 24h`, all `aborting with incomplete response` upstream `homarr:7575` from 10.69.20.115 every 60 s | Uptime Kuma's Homarr monitor closes early; the noise hides real Caddy errors in Dozzle | Point that monitor at a lighter check (a health or status endpoint) |
+| N7 | prdsrv3 `/nebula-sync restarts=13` | Healthy now; probably restarts when the primary Pi-hole restarts | Check its log at the next Pi-hole update |
+
+Checked and not findings: Metabase's 44 "error" lines are Liquibase migration file names; Arcane's
+are retried image-check warnings that completed ("12 checked, 0 errors"). The reboots on 18, 23
+and 27 Oct were clean and started over SSH from osbmac1 (patching), not crashes or power cuts.
