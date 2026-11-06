@@ -1,6 +1,7 @@
 ---
 # Read-only audit of Linux VMs. Fetches reports to audit/vm-<name>.txt
 #   make audit-vms
+# A lab VM that is switched off is skipped with a note; an unreachable prod VM still fails.
 - name: Audit Linux VMs (read-only)
   hosts: all
   become: true
@@ -10,6 +11,12 @@
       ansible.builtin.script: ../../scripts/audit-guest.sh
       register: audit_out
       changed_when: false
+      ignore_unreachable: "{{ 'lab' in group_names }}"
+
+    - name: Lab VM not reachable (probably stopped); its old report is kept
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} skipped: {{ audit_out.msg | default('unreachable') }}"
+      when: audit_out.unreachable | default(false)
 
     - name: Save report on the Mac
       ansible.builtin.copy:
@@ -18,3 +25,4 @@
         mode: "0644"
       delegate_to: localhost
       become: false
+      when: not (audit_out.unreachable | default(false))
