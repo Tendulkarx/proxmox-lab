@@ -280,3 +280,21 @@ health status, after touching Oracle.
 
 Seen during the fixes: all 18 Uptime Kuma monitors were paused from the web UI at 18:13:40 by
 O'Neil's login; left paused for O'Neil to resume.
+
+## Re-audit (2026-11-06, 19:22): after the fixes and host reboots
+
+Every finding from 18:05 is closed. Both hosts rebooted by O'Neil (prx2 18:30 and 18:49, prx1
+18:35) and run `7.0.14-28-pve`; only 26 and 28 remain installed. prx1 `/proc/cmdline` is
+`quiet intel_iommu=on iommu=pt` (i915 options gone). prdsrv3 `/dev/loop0 16G 4.8G 11G 32%`.
+prdsrv1 build cache 160 MB (was 11.6 GB); prdsrv2 images 12.7 GB, 1% reclaimable. All 18 Uptime
+Kuma monitors active again. No prx2 `mail-to-root` errors since the Ansible change (the next
+nightly job at 02:30 is the real test).
+
+Reboot noise only: Caddy `dial tcp 10.69.20.131:8006` and `10.69.20.115:3001/8090` refused or
+timed out while prx2 restarted; Oracle's TNS errors are the listener outage fixed at 18:42;
+SQL Server's are startup lines. Paperless, Metabase and Homarr: 0 error lines since 18:40.
+
+Left as they are: tstsrv1 stopped (lab); S8 prx1 boot SSD (74384 h, healthy, plan a
+replacement); prx1 `Failed to find module 'vfio_virqfd'` at boot (an `/etc/modules` entry from the
+passthrough plan, merged into `vfio` in current kernels; harmless, remove with any host change);
+prdsrv3 `rsyslogd imklog ... Permission denied` (normal in an unprivileged container).
