@@ -260,7 +260,7 @@ and 27 Oct were clean and started over SSH from osbmac1 (patching), not crashes 
 
 | # | Status |
 |---|---|
-| N1 | Prepared, not applied: `terraform/envs/prod/containers.tf` disk 8 to 16 GB; `make plan ENV=prod` shows only `size = 8 -> 16`, in place. O'Neil to run `make up ENV=prod`, then commit |
+| N1 | Fixed: disk 8 to 16 GB, applied by O'Neil at 18:29 (2775be8); prdsrv3 `/dev/loop0 16G 4.8G 11G 32%`, grown online |
 | N2 | Fixed: the compose file already pinned `23.26.3.0` and the database reports `SQL*Plus: Release 23.26.3.0.0`; the container had been created from `:latest`. Image retagged locally, container recreated from it (`--pull never`), healthy in about 30 s, instance `OPEN`; `:latest` tag removed |
 | N3 | Fixed: 11.5 GB build cache removed on prdsrv1, 8 old property-search images plus `pihole:latest` and `alpine:3.20` on prdsrv2, `hello-world` on prdsrv3. homelab-apps c528830: `update.sh` prunes the build cache after each Caddy build; property-search `run.sh` removes older release images after a good run (skips if it cannot read the current one) |
 | N4 | Partly: 6 old kernels removed on each host (26 running and 28 kept). Reboot of both hosts still to do, by O'Neil |
